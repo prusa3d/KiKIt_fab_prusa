@@ -1,0 +1,27 @@
+# Ignore python files
+__pycache__
+.mypy_cache
+
+# Ignore dev kicad files
+*.kicad_pro*
+*.kicad_prl*
+*.kicad_pcb*
+*.pro
+fp-info-cache
+
+# Ignore IDEs/editors
+.vscode
+.idea
+
+# Ignore build
+build
+dist
+Prusaman.egg-info
+*.eggs
+*.pyc
+
+# Ignore venv
+venv
+
+# Ignore testproject
+testproject
