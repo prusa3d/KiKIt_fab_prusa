@@ -1,0 +1,31 @@
+{
+    "$schema": "https://go.kicad.org/pcm/schemas/v1",
+    "name": "Prusaman",
+    "description": "Automatic project output for Prusa",
+    "description_full": "",
+    "identifier": "cz.prusa.prusaman",
+    "type": "plugin",
+    "author": {
+        "name": "Jan Mrázek",
+        "contact": {
+            "email": "email@honzamrazek.cz"
+        }
+    },
+    "maintainer": {
+        "name": "Jan Mrázek",
+        "contact": {
+            "email": "email@honzamrazek.cz"
+        }
+    },
+    "license": "Unlicense",
+    "resources": {
+        "homepage": "https://github.com/prusa3d/KiKIt_fab_prusa"
+    },
+    "versions": [
+        {
+            "version": "N/A",
+            "status": "stable",
+            "kicad_version": "6.0"
+        }
+    ]
+}
