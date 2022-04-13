@@ -1,0 +1,42 @@
+revision: 10 # Board revision number
+board_id: 1038 # ID for datamatrix
+bom_filter: ibom
+panel:
+    type: kikit
+    configuration: # The parameters for panel (what KiKit GUI produces)
+        layout:
+            rows: 2
+            cols: 2
+            hspace: 11mm
+            vspace: 11mm
+        source:
+            type: auto
+            tolerance: 3mm
+        tabs:
+            type: fixed
+            width: 2mm
+            vcount: 1
+            hcount: 1
+        framing:
+            type: tightframe
+            space: 3mm
+            width: 5mm
+            chamfer: 1mm
+            slotwidth: 3mm
+        text:
+            type: simple
+            anchor: mb
+            voffset: -2.5mm
+            layer: F.SilkS
+            width: 2.5mm
+            height: 2.5mm
+            thickness: 0.5mm
+            text: MK4-LoveBoard-30 | {date}
+        post:
+            millradius: 1.5mm
+            script: {prusaman_scripts}/prusaTooling.py
+            origin: bl
+        page:
+            anchor: bl
+            posx: 0mm
+            posy: 0mm
