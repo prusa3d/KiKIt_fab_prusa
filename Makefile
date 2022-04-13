@@ -8,8 +8,11 @@ PCM_RESOURCES := $(shell find pcm -type f -print)
 all: pcm
 
 package:
-	rm -f dist/*
+	rm -rf dist/* build/lib/*
+	# A hack follows - bdist_wheel doesn't exclude files
+	mv prusaman/resources/prusalib/prusa-3dmodels /tmp/models || true
 	python3 setup.py sdist bdist_wheel
+	mv /tmp/models prusaman/resources/prusalib/prusa-3dmodels || true
 
 pcm: build/pcm.zip
 
