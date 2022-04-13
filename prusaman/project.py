@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 from pathlib import Path
 
 class PrusamanProject:
@@ -6,10 +6,10 @@ class PrusamanProject:
     This code represents a KiCAD project and allows easy access to individual
     files without the need to hassle with project names.
     """
-    def __init__(self, path: str) -> None:
+    def __init__(self, path: Union[str, Path]) -> None:
         self._projectdir: Path = Path(path).resolve()
         name = None
-        if path.endswith(".kicad_pro"):
+        if str(path).endswith(".kicad_pro"):
             name = self._projectdir.name[:-len(".kicad_pro")]
             self._projectdir = self._projectdir.parent
         else:

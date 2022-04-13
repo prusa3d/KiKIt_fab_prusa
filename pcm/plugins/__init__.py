@@ -1,28 +1,17 @@
 import wx
 import sys
-import os
 import subprocess
 from pathlib import Path
 
 PKG_BASE = Path(__file__).resolve().parent
 
-def registerPlugins():
-    pass
-
 def locateWhl():
-    wx.MessageBox(str(PKG_BASE), "Info 2")
     for x in PKG_BASE.glob("*.whl"):
         return x.resolve()
 
-def extractPackageSemver(input):
-    assert isinstance(input, Path)
-    version = str(input[-1]).split("-")[1]
-    return readSemver(version)
-
-def readSemver(input):
-    parts = input.split("+")[0].split(".")
-    assert len(parts) == 3
-    return tuple([int(x) for x in parts])
+def extractPackageVersion(path):
+    assert isinstance(path, Path)
+    return path.name.split("-")[1]
 
 def installBackend():
     dialog = None
@@ -31,17 +20,14 @@ def installBackend():
         dialog.Show()
         dialog.Pulse()
 
-        wx.MessageBox(f"{[sys.executable, '-m', 'pip', 'install', locateWhl()]}", "Info")
-
         p = subprocess.Popen(
             [sys.executable, "-m", "pip", "install", locateWhl()],
             stderr=subprocess.PIPE, stdout=subprocess.PIPE,
-            universal_newlines=True
-        )
+            universal_newlines=True)
         while True:
             try:
                 dialog.Pulse()
-                retcode = p.wait(0.1)
+                retcode = p.wait(0.05)
                 break
             except subprocess.TimeoutExpired:
                 continue
@@ -49,17 +35,11 @@ def installBackend():
         err = p.stdout.read()
         if retcode != 0:
             raise RuntimeError(f"{out}\n{err}")
-
-
-
     except Exception as e:
-        import traceback
-        tb = traceback.format_exc()
         wx.MessageBox(
-            "Prusaman backend installation failed:\n\n" + str(tb),
+            "Prusaman backend installation failed:\n\n" + str(e),
             "Error Prusaman backend",
-            style = wx.OK | wx.ICON_ERROR
-        )
+            style = wx.OK | wx.ICON_ERROR)
         return
     finally:
         if dialog is not None:
@@ -68,52 +48,39 @@ def installBackend():
     wx.MessageBox(
         "Installation successfull. Please restart Pcbnew.",
         "Success",
-        style = wx.OK | wx.ICON_INFORMATION
-    )
-
+        style = wx.OK | wx.ICON_INFORMATION)
 
 try:
-    wx.MessageBox(
-        "Trying",
-        "Success",
-        style = wx.OK | wx.ICON_INFORMATION
-    )
-
     import prusaman
 
-    installedVersion = readSemver(prusaman.__version__)
-    availableVersion = extractPackageSemver(locateWhl())
+    installedVersion = prusaman.__version__
+    availableVersion = extractPackageVersion(locateWhl())
 
-    if installedVersion < availableVersion:
+    if installedVersion != availableVersion:
         result = wx.MessageBox(
-            "Prusaman backend is out of date, update it?"
-            "Outdated Prusaman backend",
-            style = wx.YES_NO | wx.ICON_QUESTION
-        )
+            f"Prusaman package expects backend version {availableVersion}, however, "
+            f"version {installedVersion} is installed.\n\n"
+            f"Do you wish to install {availableVersion}?",
+            "Prusaman backend version mismatch",
+            style = wx.YES_NO | wx.ICON_QUESTION)
         if result == wx.YES:
             installBackend()
 
-    wx.MessageBox(
-        "Running!",
-        "Success",
-        style = wx.OK | wx.ICON_INFORMATION
-    )
-
+    import prusaman.gui
     prusaman.gui.registerPlugins()
 except ImportError:
     result = wx.MessageBox(
         "Prusaman is installed via PCM, but it is missing backend.\n\n" +
         "Do you want to install it?",
         "Missing Prusaman backend",
-        style = wx.YES_NO | wx.ICON_QUESTION
-    )
+        style = wx.YES_NO | wx.ICON_QUESTION)
     if result == wx.YES:
         installBackend()
 except Exception as e:
     import traceback
     tb = traceback.format_exc()
     wx.MessageBox(
-        "Prusaman backend installation failed:\n\n" + str(tb),
-        "Error Prusaman backend",
-        style = wx.OK | wx.ICON_ERROR
-    )
+        "Prusaman detected unexpected error:\n\n" + str(tb),
+        "Unexpected error",
+        style = wx.OK | wx.ICON_ERROR)
+

@@ -27,7 +27,7 @@ class StdReporter:
     def _print(self, header: str, tag: str, message: str) -> None:
         BODY = 80
         wMessages = textwrap.wrap(message, BODY)
-        head, tail = wMessages[0], wMessages[1:]
+        head, *tail = wMessages
         sys.stderr.write(f"{header + ' ' + tag + ': ':>20}{head}\n")
         if len(tail) > 0:
             sys.stderr.write(textwrap.indent("\n".join(tail), 20 * " ") + "\n")
@@ -89,7 +89,7 @@ def bump():
     """
     Bump project (SOURCE) version and place the new version into OUTPUTDIR
     """
-    pass
+    raise NotImplementedError("This functionality is not implemented yet.")
 
 
 @click.group()
