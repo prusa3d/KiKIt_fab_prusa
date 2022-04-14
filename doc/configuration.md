@@ -67,7 +67,7 @@ specifikují jako v Pythonu – tj. do složených závorek, např: `Dnes je {da
 
 Podporovány jsou následující proměnné:
 - `size` – velikost desky k níž se panel vztahuje
-- `dcm` – informace o grafických symbolech (poloha + popisek)
+- `dmc` – informace o datamatrixu symbolech (poloha + popisek)
 - `date` – dnešní datum
 - `prusaman_scripts` - složka obsahující zabudované skripty Prusamanu (aktuálně
   je to pouze skript `prusaTooling.py`)

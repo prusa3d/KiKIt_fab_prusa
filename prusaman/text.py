@@ -31,7 +31,7 @@ def populateText(template: str, board: Optional[pcbnew.BOARD]) -> str:
     """
     attribs = {
         "size": Formatter(lambda: formatBoardSize(board)),
-        "dcm": Formatter(lambda: formatDatamatrixInfo(board)),
+        "dmc": Formatter(lambda: formatDatamatrixInfo(board)),
         "date": Formatter(lambda: datetime.today().strftime("%Y-%m-%d")),
         "prusaman_scripts": str(RESOURCES / "kikitscripts")
     }
