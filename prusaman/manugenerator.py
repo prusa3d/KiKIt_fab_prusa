@@ -18,7 +18,7 @@ from .export import makeDxf, makeGerbers
 from .params import GLUE_STAMPS, MILL_RELEVANT_FOOTPRINTS, RESOURCES
 from .project import PrusamanProject
 from .text import populateText
-from .util import defaultTo, groupBy, splitOn, zipFiles
+from .util import defaultTo, groupBy, splitOn, zipFiles, locatePythonInterpreter
 
 T = TypeVar("T")
 OutputReporter = Callable[[str, str], None]  # Takes TAG and message
@@ -465,7 +465,7 @@ class Manugenerator:
 
     def _makeIbom(self, source: Path, outdir: Path) -> None:
         ibomBinary = RESOURCES / "ibom" / "InteractiveHtmlBom" / "generate_interactive_bom.py"
-        command = [str(ibomBinary), "--no-browser",
+        command = [locatePythonInterpreter(), str(ibomBinary), "--no-browser",
                    "--name-format", "%f-ibom",
                    "--dest-dir", str(outdir), str(source)]
         result = subprocess.run(command, capture_output=True)

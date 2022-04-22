@@ -2,6 +2,7 @@ from zipfile import ZipFile
 from pathlib import Path
 import shutil
 import os
+import sys
 
 from typing import Union, List, Optional, TypeVar, Callable, Tuple, Iterable, Dict
 
@@ -55,3 +56,12 @@ def groupBy(items: Iterable[T], key: Callable[[T], K]) -> Dict[K, List[T]]:
         group.append(item)
         result[itemKey] = group
     return result
+
+def locatePythonInterpreter() -> str:
+    """
+    Locate Python interpreter that belongs to the KiCAD's installation
+    """
+    e = Path(sys.executable)
+    if e.name in ["kicad.exe", "pcbnew.exe"]:
+        e = e.parent / "pythonw.exe"
+    return str(e)

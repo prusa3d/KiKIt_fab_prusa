@@ -1,5 +1,6 @@
 import wx
 import sys
+import os
 import subprocess
 from pathlib import Path
 
@@ -13,6 +14,13 @@ def extractPackageVersion(path):
     assert isinstance(path, Path)
     return path.name.split("-")[1]
 
+def locatePythonWrapper():
+    e = Path(sys.executable)
+    return str(e.parent / "kicad-cmd.bat")
+
+def winEsc(s):
+    return str(s).replace(" ", "^ ")
+
 def installBackend():
     dialog = None
     try:
@@ -20,10 +28,17 @@ def installBackend():
         dialog.Show()
         dialog.Pulse()
 
-        p = subprocess.Popen(
-            [sys.executable, "-m", "pip", "install", locateWhl()],
-            stderr=subprocess.PIPE, stdout=subprocess.PIPE,
-            universal_newlines=True)
+        if os.name == "nt":
+            p = subprocess.Popen(
+                ["start", "cmd.exe", "/k", f"{winEsc(locatePythonWrapper())} && python -m pip install {winEsc(locateWhl())} && EXIT /B"],
+                stderr=subprocess.PIPE, stdout=subprocess.PIPE, stdin=subprocess.PIPE,
+                universal_newlines=True,
+                shell=True)
+        else:
+            p = subprocess.Popen(
+                [sys.executable, "-m", "pip", "install", locateWhl()],
+                stderr=subprocess.PIPE, stdout=subprocess.PIPE,
+                universal_newlines=True)
         while True:
             try:
                 dialog.Pulse()
@@ -46,7 +61,7 @@ def installBackend():
             dialog.Destroy()
 
     wx.MessageBox(
-        "Installation successfull. Please restart Pcbnew.",
+        "Installation successfull.",
         "Success",
         style = wx.OK | wx.ICON_INFORMATION)
 
@@ -65,17 +80,29 @@ try:
             style = wx.YES_NO | wx.ICON_QUESTION)
         if result == wx.YES:
             installBackend()
+            # Reload the module so the changes are visible immediatelly.
+            import importlib
+            importlib.reload(prusaman)
 
     import prusaman.gui
     prusaman.gui.registerPlugins()
 except ImportError:
     result = wx.MessageBox(
-        "Prusaman is installed via PCM, but it is missing backend.\n\n" +
-        "Do you want to install it?",
+        "Prusaman is installed via PCM, but it is missing backend.\n\n" + \
+        "Do you want to install it?" + \
+            "\n\nThere will be a popup window during the installation" \
+                if os.name == "nt" else "",
         "Missing Prusaman backend",
         style = wx.YES_NO | wx.ICON_QUESTION)
     if result == wx.YES:
         installBackend()
+    try:
+        import prusaman.gui
+        prusaman.gui.registerPlugins()
+    except Exception:
+        # Let's try importing
+        pass
+    
 except Exception as e:
     import traceback
     tb = traceback.format_exc()

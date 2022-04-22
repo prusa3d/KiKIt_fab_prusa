@@ -12,10 +12,14 @@ from .params import RESOURCES
 from .dialogs.prusamanExport import PrusamanExportBase
 from .project import PrusamanProject
 from .manugenerator import Manugenerator, replaceDirectory
+from .util import locatePythonInterpreter
 
 class PrusamanExport(PrusamanExportBase):
     def __init__(self, projectPath, *args, **kwargs):
         super().__init__(parent=None, *args, **kwargs)
+
+        self.SetIcon(wx.Icon(str(RESOURCES / "icons" / "exportIcon.png")))
+
         self.projectPath = Path(projectPath)
         self.triggered = False
         self.oldLabel = ""
@@ -84,7 +88,9 @@ class PrusamanExport(PrusamanExportBase):
                 wx.MessageBox("Export finished successfully", "Export finished",
                               style=wx.OK | wx.ICON_INFORMATION))
         except Exception as e:
+            self.onWarning("GEN", f"Error occured: {e}")
             reportException(e)
+            wx.CallAfter(lambda: self.outputProgressbar.SetValue(0))
         finally:
             wx.CallAfter(lambda: self.exportButton.SetLabelText(self.oldLabel))
             wx.CallAfter(lambda: self.exportButton.Enable())
@@ -129,9 +135,11 @@ class ExportPlugin(pcbnew.ActionPlugin):
 
             # Due to problems in KiCAD leading to segfault, we have to run export in
             # a separate process.
-            command = [sys.executable, "-c",
-                f"from prusaman.gui import runExport; runExport('{projectPath}');"]
-            subprocess.run(command)
+            command = [locatePythonInterpreter(), "-c",
+                f"from prusaman.gui import runExport; runExport('{projectPath.as_posix()}');"]
+            p = subprocess.run(command, capture_output=True, encoding="utf-8")
+            if p.returncode != 0:
+                raise RuntimeError(f"Cannot run Prusaman dialog in a new process: {p.stdout}\n{p.stderr}")
         except Exception as e:
             reportException(e)
 
