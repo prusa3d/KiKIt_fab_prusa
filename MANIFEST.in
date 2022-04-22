@@ -1,4 +1,5 @@
 include versioneer.py
 include prusaman/_version.py
+recursive-include prusaman/dialogs *.py
 recursive-include prusaman/resources *
 recursive-exclude prusaman/resources/prusalib/prusa-3dmodels/ *

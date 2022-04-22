@@ -8,6 +8,9 @@ PCM_RESOURCES := $(shell find pcm -type f -print)
 all: pcm
 
 package:
+	# Clean up any python cache
+	python3 -Bc "import pathlib; [p.unlink() for p in pathlib.Path('.').rglob('*.py[co]')]"
+	python3 -Bc "import pathlib; [p.rmdir() for p in pathlib.Path('.').rglob('__pycache__')]"
 	rm -rf dist/* build/lib/*
 	# A hack follows - bdist_wheel doesn't exclude files
 	mv prusaman/resources/prusalib/prusa-3dmodels /tmp/models || true
