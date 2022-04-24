@@ -54,16 +54,17 @@ def installBackend():
         wx.MessageBox(
             "Prusaman backend installation failed:\n\n" + str(e),
             "Error Prusaman backend",
-            style = wx.OK | wx.ICON_ERROR)
+            style = wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP)
         return
     finally:
         if dialog is not None:
+            dialog.Hide()
             dialog.Destroy()
 
     wx.MessageBox(
         "Installation successfull.",
-        "Success",
-        style = wx.OK | wx.ICON_INFORMATION)
+        "Prusaman",
+        style = wx.OK | wx.ICON_INFORMATION | wx.STAY_ON_TOP)
 
 try:
     import prusaman
@@ -102,7 +103,7 @@ except ImportError:
     except Exception:
         # Let's try importing
         pass
-    
+
 except Exception as e:
     import traceback
     tb = traceback.format_exc()

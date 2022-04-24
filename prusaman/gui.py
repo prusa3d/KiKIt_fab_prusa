@@ -50,7 +50,7 @@ class PrusamanExport(PrusamanExportBase):
         except Exception as e:
             self.exportButton.SetLabelText(self.oldLabel)
             self.exportButton.Enable()
-            raise e from None
+            reportException(e)
 
     def doExportWork(self, outDir, project, requestedConfiguration):
         try:
@@ -118,6 +118,7 @@ class PrusamanExport(PrusamanExportBase):
 class ExportPlugin(pcbnew.ActionPlugin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.exception = None
 
     def defaults(self):
         self.name = "Prusaman: Export"
@@ -127,6 +128,15 @@ class ExportPlugin(pcbnew.ActionPlugin):
         self.show_toolbar_button = True
 
     def Run(self):
+        t = Thread(target=self.backgroundRun, daemon=True)
+        t.start()
+        self.exception = None
+        while not t.is_alive():
+            t.join(timeout=0.1)
+        if self.exception:
+            reportException(self.exception)
+
+    def backgroundRun(self):
         try:
             if pcbnew.GetBoard().IsEmpty():
                 raise RuntimeError("Cannot export when there is no board opened")
@@ -141,7 +151,7 @@ class ExportPlugin(pcbnew.ActionPlugin):
             if p.returncode != 0:
                 raise RuntimeError(f"Cannot run Prusaman dialog in a new process: {p.stdout}\n{p.stderr}")
         except Exception as e:
-            reportException(e)
+            self.exception = e
 
 
 def registerPlugins():
@@ -160,7 +170,6 @@ def runExport(path):
         reportException(e)
     finally:
         d.Destroy()
-
 
 if __name__ == "__main__":
     runExport(sys.argv[1])
