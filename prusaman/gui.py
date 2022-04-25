@@ -88,7 +88,7 @@ class PrusamanExport(PrusamanExportBase):
                 wx.MessageBox("Export finished successfully", "Export finished",
                               style=wx.OK | wx.ICON_INFORMATION))
         except Exception as e:
-            self.onWarning("GEN", f"Error occured: {e}")
+            self.onError("", f"Error occured: {e}")
             reportException(e)
             wx.CallAfter(lambda: self.outputProgressbar.SetValue(0))
         finally:
@@ -101,6 +101,9 @@ class PrusamanExport(PrusamanExportBase):
 
     def onInfo(self, tag, message):
         self.addMessage("Info", tag, message)
+
+    def onError(self, tag, message):
+        self.addMessage("Error", tag, message)
 
     def addMessage(self, header, tag, message):
         if len(message) == 0:
