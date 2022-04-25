@@ -1,12 +1,9 @@
 from pcbnew import wxPointMM, FootprintLoad, UTF8
 import os
 
-OTHER_LIB = os.path.join(os.environ["PRUSAMAN_PRUSA_LIB"],
-                         "prusa-footprints",
-                         "prusa_other.pretty")
 
 def addPrusaFp(panel, name, position,):
-    footprint = FootprintLoad(OTHER_LIB, name)
+    footprint = FootprintLoad(os.environ["PRUSAMAN_PRUSA_LIB"], name)
 
     fid = footprint.GetFPID()
     fid.SetLibNickname(UTF8("prusa_other"))

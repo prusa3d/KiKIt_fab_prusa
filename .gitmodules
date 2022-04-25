@@ -1,6 +1,3 @@
 [submodule "prusaman/resources/ibom"]
 	path = prusaman/resources/ibom
 	url = https://github.com/openscopeproject/InteractiveHtmlBom.git
-[submodule "prusaman/resources/prusalib"]
-	path = prusaman/resources/prusalib
-	url = git@github.com:prusa3d/PrusaKicadLib.git

@@ -35,4 +35,7 @@ def populateText(template: str, board: Optional[pcbnew.BOARD]) -> str:
         "date": Formatter(lambda: datetime.today().strftime("%Y-%m-%d")),
         "prusaman_scripts": str(RESOURCES / "kikitscripts")
     }
-    return template.format(**attribs)
+    try:
+        return template.format(**attribs)
+    except KeyError as e:
+        raise RuntimeError(f"Unknown variable {e} in text:\n{template}") from None
