@@ -445,7 +445,7 @@ class Manugenerator:
             with open(kikitCfgFile, "w") as f:
                 json.dump(kikitCfg, f)
 
-            os.environ["PRUSAMAN_PRUSA_LIB"] = str(RESOURCES / "prusalib")
+            os.environ["PRUSAMAN_PRUSA_LIB"] = str(RESOURCES / "prusalib.pretty")
 
             preset = ki.obtainPreset([str(kikitCfgFile)])
             doPanelization(str(input), str(output), preset)
