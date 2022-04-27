@@ -46,6 +46,10 @@ def installBackend():
                 break
             except subprocess.TimeoutExpired:
                 continue
+        dialog.Hide()
+        dialog.Destroy()
+        dialog = None
+        
         out = p.stdout.read()
         err = p.stdout.read()
         if retcode != 0:
@@ -62,7 +66,7 @@ def installBackend():
             dialog.Destroy()
 
     wx.MessageBox(
-        "Installation successfull.",
+        "Installation successfull. Please restart KiCAD so the changes takes effect.",
         "Prusaman",
         style = wx.OK | wx.ICON_INFORMATION | wx.STAY_ON_TOP)
 
@@ -81,10 +85,6 @@ try:
             style = wx.YES_NO | wx.ICON_QUESTION)
         if result == wx.YES:
             installBackend()
-            # Reload the module so the changes are visible immediatelly.
-            import importlib
-            importlib.reload(prusaman)
-
     import prusaman.gui
     prusaman.gui.registerPlugins()
 except ImportError:

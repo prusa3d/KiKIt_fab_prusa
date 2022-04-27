@@ -81,6 +81,7 @@ class PrusamanExport(PrusamanExportBase):
 
                 Path(outDir).mkdir(parents=True, exist_ok=True)
                 replaceDirectory(outDir, tmpdir)
+                self.onInfo("GEN", "Finished, all files were successfully generated.")
 
             wx.CallAfter(lambda: self.outputProgressbar.SetValue(self.outputProgressbar.GetRange()))
 
@@ -122,6 +123,7 @@ class ExportPlugin(pcbnew.ActionPlugin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.exception = None
+        self.worker = None
 
     def defaults(self):
         self.name = "Prusaman: Export"
@@ -131,13 +133,10 @@ class ExportPlugin(pcbnew.ActionPlugin):
         self.show_toolbar_button = True
 
     def Run(self):
-        t = Thread(target=self.backgroundRun, daemon=True)
-        t.start()
+        self.worker = Thread(target=self.backgroundRun, daemon=True)
         self.exception = None
-        while not t.is_alive():
-            t.join(timeout=0.1)
-        if self.exception:
-            reportException(self.exception)
+        self.worker.start()
+        self.watchWorker()
 
     def backgroundRun(self):
         try:
@@ -155,6 +154,13 @@ class ExportPlugin(pcbnew.ActionPlugin):
                 raise RuntimeError(f"Cannot run Prusaman dialog in a new process: {p.stdout}\n{p.stderr}")
         except Exception as e:
             self.exception = e
+
+    def watchWorker(self):
+        if self.worker.is_alive():
+            wx.CallLater(100, self.watchWorker)
+        else:
+            if self.exception:
+                reportException(e)
 
 
 def registerPlugins():
