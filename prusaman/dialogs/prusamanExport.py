@@ -101,3 +101,78 @@ class PrusamanExportBase ( wx.Dialog ):
 		event.Skip()
 
 
+###########################################################################
+## Class ErrorDialogBase
+###########################################################################
+
+class ErrorDialogBase ( wx.Dialog ):
+
+	def __init__( self, parent ):
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Prusaman Error", pos = wx.DefaultPosition, size = wx.Size( 450,-1 ), style = wx.DEFAULT_DIALOG_STYLE|wx.STAY_ON_TOP )
+
+		self.SetSizeHints( wx.Size( 450,-1 ), wx.Size( -1,-1 ) )
+
+		bSizer3 = wx.BoxSizer( wx.VERTICAL )
+
+		bSizer6 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_bitmap1 = wx.StaticBitmap( self, wx.ID_ANY, wx.ArtProvider.GetBitmap( wx.ART_ERROR, wx.ART_MESSAGE_BOX ), wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer6.Add( self.m_bitmap1, 0, wx.ALL, 5 )
+
+		self.errorMessage = wx.StaticText( self, wx.ID_ANY, u"Lorem ipsum", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.errorMessage.Wrap( -1 )
+
+		bSizer6.Add( self.errorMessage, 0, wx.ALL|wx.EXPAND, 20 )
+
+
+		bSizer3.Add( bSizer6, 1, wx.EXPAND, 5 )
+
+		self.errorDetailsPane = wx.CollapsiblePane( self, wx.ID_ANY, u"Error details", wx.DefaultPosition, wx.DefaultSize, wx.CP_DEFAULT_STYLE )
+		self.errorDetailsPane.Collapse( True )
+
+		bSizer4 = wx.BoxSizer( wx.VERTICAL )
+
+		self.errorDetails = wx.TextCtrl( self.errorDetailsPane.GetPane(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.HSCROLL|wx.TE_BESTWRAP|wx.TE_LEFT|wx.TE_MULTILINE|wx.TE_READONLY|wx.TE_WORDWRAP )
+		self.errorDetails.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
+
+		bSizer4.Add( self.errorDetails, 0, wx.ALL|wx.EXPAND, 5 )
+
+
+		self.errorDetailsPane.GetPane().SetSizer( bSizer4 )
+		self.errorDetailsPane.GetPane().Layout()
+		bSizer4.Fit( self.errorDetailsPane.GetPane() )
+		bSizer3.Add( self.errorDetailsPane, 0, wx.EXPAND |wx.ALL, 5 )
+
+		bSizer5 = wx.BoxSizer( wx.HORIZONTAL )
+
+
+		bSizer5.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+
+		self.okButton = wx.Button( self, wx.ID_ANY, u"OK", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer5.Add( self.okButton, 0, wx.ALL, 5 )
+
+
+		bSizer3.Add( bSizer5, 0, wx.EXPAND, 5 )
+
+
+		self.SetSizer( bSizer3 )
+		self.Layout()
+
+		self.Centre( wx.BOTH )
+
+		# Connect Events
+		self.errorDetailsPane.Bind( wx.EVT_COLLAPSIBLEPANE_CHANGED, self.handleExpansion )
+		self.okButton.Bind( wx.EVT_BUTTON, self.handleOk )
+
+	def __del__( self ):
+		pass
+
+
+	# Virtual event handlers, override them in your derived class
+	def handleExpansion( self, event ):
+		event.Skip()
+
+	def handleOk( self, event ):
+		event.Skip()
+
+

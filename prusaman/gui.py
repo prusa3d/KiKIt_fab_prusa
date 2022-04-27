@@ -4,15 +4,32 @@ import textwrap
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from threading import Thread
-import time
+import traceback
 import sys
 import subprocess
 
 from .params import RESOURCES
-from .dialogs.prusamanExport import PrusamanExportBase
+from .dialogs.prusamanExport import PrusamanExportBase, ErrorDialogBase
 from .project import PrusamanProject
 from .manugenerator import Manugenerator, replaceDirectory
 from .util import locatePythonInterpreter
+
+class ErrorDialog(ErrorDialogBase):
+    def __init__(self, error, details, parent=None, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.errorMessage.SetLabelText(f"Error: {error}")
+        self.errorDetails.SetValue(details)
+        self.SetMinSize(wx.Size(450, -1))
+        self.Fit()
+
+    def handleOk(self, event):
+        super().handleOk(event)
+        self.Close()
+
+    def handleExpansion(self, event):
+        super().handleExpansion(event)
+        self.SetMinSize(wx.Size(450, -1))
+
 
 class PrusamanExport(PrusamanExportBase):
     def __init__(self, projectPath, *args, **kwargs):
@@ -50,7 +67,7 @@ class PrusamanExport(PrusamanExportBase):
         except Exception as e:
             self.exportButton.SetLabelText(self.oldLabel)
             self.exportButton.Enable()
-            reportException(e)
+            reportException(e, traceback.format_exc())
 
     def doExportWork(self, outDir, project, requestedConfiguration):
         try:
@@ -90,7 +107,7 @@ class PrusamanExport(PrusamanExportBase):
                               style=wx.OK | wx.ICON_INFORMATION))
         except Exception as e:
             self.onError("", f"Error occured: {e}")
-            reportException(e)
+            reportException(e, traceback.format_exc())
             wx.CallAfter(lambda: self.outputProgressbar.SetValue(0))
         finally:
             wx.CallAfter(lambda: self.exportButton.SetLabelText(self.oldLabel))
@@ -123,6 +140,7 @@ class ExportPlugin(pcbnew.ActionPlugin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.exception = None
+        self.traceback = None
         self.worker = None
 
     def defaults(self):
@@ -154,20 +172,21 @@ class ExportPlugin(pcbnew.ActionPlugin):
                 raise RuntimeError(f"Cannot run Prusaman dialog in a new process: {p.stdout}\n{p.stderr}")
         except Exception as e:
             self.exception = e
+            self.traceback = traceback.format_exc()
 
     def watchWorker(self):
         if self.worker.is_alive():
             wx.CallLater(100, self.watchWorker)
         else:
             if self.exception:
-                reportException(e)
+                reportException(self.exception, self.traceback)
 
 
 def registerPlugins():
     ExportPlugin().register()
 
-def reportException(e):
-    wx.CallAfter(lambda: wx.MessageBox(str(e), "Error", wx.OK | wx.ICON_ERROR))
+def reportException(e, details):
+    wx.CallAfter(lambda: ErrorDialog(e, details).ShowModal())
 
 def runExport(path):
     app = wx.App()
@@ -176,7 +195,7 @@ def runExport(path):
     try:
         d.ShowModal()
     except Exception as e:
-        reportException(e)
+        reportException(e, traceback.format_exc())
     finally:
         d.Destroy()
 
