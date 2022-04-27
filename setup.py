@@ -48,7 +48,7 @@ setuptools.setup(
         "versioneer"
     ],
     extras_require={
-        "dev": ["pytest"],
+        "dev": ["pytest", "astunparse"],
     },
     zip_safe=False,
     include_package_data=True,

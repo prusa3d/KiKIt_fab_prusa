@@ -11,8 +11,14 @@ package:
 	# Clean up any python cache
 	python3 -Bc "import pathlib; [p.unlink() for p in pathlib.Path('.').rglob('*.py[co]')]"
 	python3 -Bc "import pathlib; [p.rmdir() for p in pathlib.Path('.').rglob('__pycache__')]"
+
+	# Remove all prints in iBom version
+	releng/stripPythonPrints.py prusaman/resources/ibom/InteractiveHtmlBom/version.py > prusaman/resources/ibom/InteractiveHtmlBom/version.py
+
 	rm -rf dist/* build/lib/*
 	python3 setup.py sdist bdist_wheel
+
+	git submodule foreach git reset --hard
 
 pcm: build/pcm.zip
 
