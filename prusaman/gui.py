@@ -43,6 +43,9 @@ class PrusamanExport(PrusamanExportBase):
 
     def onExport(self, event):
         self.oldLabel = self.exportButton.GetLabelText()
+        def abandon():
+            self.exportButton.SetLabelText(self.oldLabel)
+            self.exportButton.Enable()
         try:
             self.outputProgressbar.SetValue(0)
             self.outputText.SetValue("")
@@ -54,6 +57,16 @@ class PrusamanExport(PrusamanExportBase):
             if len(self.outDirSelector.GetPath()) == 0:
                 raise RuntimeError("No output directory specified")
             outDir = Path(self.outDirSelector.GetPath())
+            if outDir.exists():
+                answer = wx.MessageBox(
+                    f"The output directory {outDir} already exists. " + \
+                    "Running export will remove all files in it. Continue?",
+                    "Overwrite files in the output directory?",
+                    wx.ICON_QUESTION | wx.YES_NO)
+                if answer == wx.NO:
+                    abandon()
+                    return
+
             project = PrusamanProject(self.projectPath)
             if not project.getConfiguration().exists:
                 raise RuntimeError("This project is missing prusaman.yaml")
@@ -65,8 +78,7 @@ class PrusamanExport(PrusamanExportBase):
                        args=(outDir, project, requestedConfiguration))
             t.start()
         except Exception as e:
-            self.exportButton.SetLabelText(self.oldLabel)
-            self.exportButton.Enable()
+            abandon()
             reportException(e, traceback.format_exc())
 
     def doExportWork(self, outDir, project, requestedConfiguration):
@@ -83,6 +95,7 @@ class PrusamanExport(PrusamanExportBase):
                         generator.make()
                     except Exception as e:
                         exception = e
+                self.onInfo("", "Starting export")
                 t = Thread(target=work)
                 t.start()
                 while True:
@@ -98,7 +111,7 @@ class PrusamanExport(PrusamanExportBase):
 
                 Path(outDir).mkdir(parents=True, exist_ok=True)
                 replaceDirectory(outDir, tmpdir)
-                self.onInfo("GEN", "Finished, all files were successfully generated.")
+                self.onInfo("", "Finished, all files were successfully generated.")
 
             wx.CallAfter(lambda: self.outputProgressbar.SetValue(self.outputProgressbar.GetRange()))
 
