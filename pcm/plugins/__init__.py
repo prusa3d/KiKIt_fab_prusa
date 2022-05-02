@@ -6,6 +6,13 @@ from pathlib import Path
 
 PKG_BASE = Path(__file__).resolve().parent
 
+def ensurePip():
+    try:
+        subprocess.run([sys.executable, "-m", "pip", "--help"],
+            capture_output=True, check=True)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError("Missing pip, cannot install backend.") from None
+
 def locateWhl():
     for x in PKG_BASE.glob("*.whl"):
         return x.resolve()
@@ -35,6 +42,7 @@ def installBackend():
                 universal_newlines=True,
                 shell=True)
         else:
+            ensurePip()
             p = subprocess.Popen(
                 [sys.executable, "-m", "pip", "install", locateWhl()],
                 stderr=subprocess.PIPE, stdout=subprocess.PIPE,
@@ -49,7 +57,7 @@ def installBackend():
         dialog.Hide()
         dialog.Destroy()
         dialog = None
-        
+
         out = p.stdout.read()
         err = p.stdout.read()
         if retcode != 0:
@@ -78,8 +86,8 @@ try:
 
     if installedVersion != availableVersion:
         result = wx.MessageBox(
-            f"Prusaman package expects backend version {availableVersion}, however, "
-            f"version {installedVersion} is installed.\n\n"
+            f"Prusaman package expects backend version {availableVersion}, however, " + \
+            f"version {installedVersion} is installed.\n\n" + \
             f"Do you wish to install {availableVersion}?",
             "Prusaman backend version mismatch",
             style = wx.YES_NO | wx.ICON_QUESTION)
@@ -88,11 +96,12 @@ try:
     import prusaman.gui
     prusaman.gui.registerPlugins()
 except ImportError:
+    message = "Prusaman is installed via PCM, but it is missing backend.\n\n"
+    message += "Do you want to install it?"
+    if os.name == "nt":
+        message += "\n\nThere will be a popup window during the installation"
     result = wx.MessageBox(
-        "Prusaman is installed via PCM, but it is missing backend.\n\n" + \
-        "Do you want to install it?" + \
-            "\n\nThere will be a popup window during the installation" \
-                if os.name == "nt" else "",
+        message,
         "Missing Prusaman backend",
         style = wx.YES_NO | wx.ICON_QUESTION)
     if result == wx.YES:
