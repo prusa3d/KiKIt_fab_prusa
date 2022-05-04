@@ -11,6 +11,7 @@ PCB Specifications:
 
 - we accept max 5% "X boards" on panel
 
+DMC Specifications:
 {dmc}
 
 

@@ -52,7 +52,7 @@ class PrusamanConfiguration:
             with open(path, "r") as f:
                 content = f.read()
             # Expand variables used in the configuration
-            content = populateText(content, None)
+            content = populateText(content)
             cfg = yaml.load(StringIO(content))
             return cls(cfg)
         except FileNotFoundError:

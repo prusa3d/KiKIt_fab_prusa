@@ -384,7 +384,7 @@ class Manugenerator:
     def _makeMillReadme(self, outdir: Path, panel: pcbnew.BOARD) -> None:
         try:
             with open(self._project.getMillReadmeTemplate(), "r") as f:
-                content = populateText(f.read(), panel)
+                content = populateText(f.read(), panel, self._cfg["board_id"])
         except FileNotFoundError as e:
             raise RuntimeError(f"Missing mill readme template. Please create the file {self._project.getMillReadmeTemplate()}") from None
         with open(outdir / "README.txt", "w") as f:
@@ -431,7 +431,7 @@ class Manugenerator:
     def _makePanelReadme(self, outdir: Path, boardPath: Path) -> None:
         try:
             with open(self._project.getPanelReadmeTemplate(), "r") as f:
-                content = populateText(f.read(), pcbnew.LoadBoard(str(boardPath)))
+                content = populateText(f.read(), pcbnew.LoadBoard(str(boardPath)), self._cfg["board_id"])
         except FileNotFoundError as e:
             raise RuntimeError(f"Missing panel readme template. Please create the file {self._project.getPanelReadmeTemplate()}") from None
         with open(outdir / "README.txt", "w") as f:
