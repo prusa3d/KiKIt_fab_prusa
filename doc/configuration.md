@@ -11,7 +11,7 @@ níže).
 ```.yaml
 revision: 10 # Specifikace revize desky
 board_id: 1038 # Přidělené ID desky (shodné s datamatrixem)
-bom_filer: ibom # nebo legacy - viz Filtrování BOMu níže
+bom_filer: pnb # nebo legacy - viz Filtrování BOMu níže
 panel:
     type: kikit # nebo manual nebo script. Určuje, jak je tvořen panel
     configuration:
@@ -21,18 +21,20 @@ panel:
         # ...a další nastavení KiKitu. Stejná struktura jako JSON generovaný KiKit GUI
 ```
 
-Ukázkové soubory jsou k nalezení v adresáři [example](example).
+Ukázkové projekty jsou k nalezení v adresáři [examples](examples).
 
 ## Filtrování BOMu
 
 Prusaman podporuje dva typy filtrování BOMu:
-- `ibom` – to je moderní styl (viz [Confluence](https://cfl.prusa3d.com/display/RD/Osazovaci+data+pro+PRUSA-SMT?)), který se řídí políčkem "Configuration" u symbolů.
 - `legacy` – je původní styl (viz
   [Confluence](https://cfl.prusa3d.com/pages/viewpage.action?pageId=41468219)),
   který se řídí hvězdičkou v políčku ID.
+- `pnb` – je nový styl. Pokud má symbol pole `PnB`, tak:
+    - `#` – neosazuji, nanakupuji
+    - `dnf` – neozsazuji, nenakupuji
+    - `` (prázdné pole) – osazuji, nakupuji
 
-Doporučujeme používat styl `ibom` jelikož je flexibilnější, méně matoucí a
-zejména umožňuje různé osazovací varianty bez změny schématu.
+Doporučujeme používat styl `pnb` jelikož je inutitivnější.
 
 ## Specifikace panelu
 

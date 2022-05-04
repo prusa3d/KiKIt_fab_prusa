@@ -11,7 +11,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union, TextIO
 
-import pcbnew  # type: ignore
+import pcbnew # type: ignore
+
+from prusaman.bom import BomFilter, LegacyFilter, PnBFilter
 
 from .configuration import PrusamanConfiguration
 from .export import makeDxf, makeGerbers
@@ -239,8 +241,10 @@ class Manugenerator:
         self._makesmtStageDxf(outdir)
         self._makeIbom(self._project.getBoard(), outdir)
 
+        bomFilter = self._bomFilter
+
         bom = extractComponents(str(self._project.getSchema()))
-        bom = [x for x in bom if self._bomAssemblyFilter(x)]
+        bom = [x for x in bom if bomFilter.assemblyFilter(x)]
         bom.sort(key=naturalComponetKey)
 
         with open(posName, "w") as posFile:
@@ -263,8 +267,10 @@ class Manugenerator:
         sourcingListName = outdir / (self._project.getName() + "_BOM.csv")
         zipName = outdir / (self._project.getName() + "_BOM.zip")
 
+        bomFilter = self._bomFilter
+
         bom = extractComponents(str(self._project.getSchema()))
-        bom = [x for x in bom if self._bomSourcingFilter(x)]
+        bom = [x for x in bom if bomFilter.sourcingFilter(x)]
 
         grouppedBom = groupBy(bom, key=lambda c: (
             getField(c, "Footprint"),
@@ -517,15 +523,9 @@ class Manugenerator:
         return allow and self._commonBomFilter(item)
 
     @property
-    def _bomAssemblyFilter(self) -> Callable[[Symbol], bool]:
-        return {
-            "legacy": self._legacyBomAssemblyFilter,
-            "ibom": self._iBomFilter,
-        }[self._cfg["bom_filter"]]
-
-    @property
-    def _bomSourcingFilter(self) -> Callable[[Symbol], bool]:
-        return {
-            "legacy": self._legacyBomSourcingFilter,
-            "ibom": self._iBomFilter,
-        }[self._cfg["bom_filter"]]
+    def _bomFilter(self) -> BomFilter:
+        filters: Dict[str, Callable[[], BomFilter]] = {
+            "legacy": lambda: LegacyFilter(),
+            "pnb": lambda: PnBFilter(),
+        }
+        return filters[self._cfg["bom_filter"]]()

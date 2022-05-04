@@ -3,10 +3,7 @@ __pycache__
 .mypy_cache
 
 # Ignore dev kicad files
-*.kicad_pro*
-*.kicad_prl*
-*.kicad_pcb*
-*.pro
+*-backups
 fp-info-cache
 
 # Ignore IDEs/editors

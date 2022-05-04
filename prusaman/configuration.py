@@ -99,6 +99,6 @@ class PrusamanConfiguration:
         return Schema({
             "revision": And(int, lambda x: x > 0),
             "board_id": Or(str, int),
-            "bom_filter": Or("ibom", "legacy"),
+            "bom_filter": Or("kibom", "legacy", "pnb"),
             "panel": panelSchema
         })

@@ -1,6 +1,6 @@
 revision: 10 # Board revision number
 board_id: 1038 # ID for datamatrix
-bom_filter: ibom
+bom_filter: pnb
 panel:
     type: kikit
     configuration: # The parameters for panel (what KiKit GUI produces)
