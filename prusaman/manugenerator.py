@@ -247,9 +247,9 @@ class Manugenerator:
         bom = [x for x in bom if bomFilter.assemblyFilter(x)]
         bom.sort(key=naturalComponetKey)
 
-        with open(posName, "w") as posFile:
+        with open(posName, "w", newline="") as posFile:
             self._makeSmtPosFile(posFile, bom, self._project.getBoard())
-        with open(bomName, "w") as bomFile:
+        with open(bomName, "w", newline="") as bomFile:
             self._makeSmtBomFile(bomFile, bom)
 
         zipFiles(zipName, outdir, [posName, bomName])
@@ -280,7 +280,7 @@ class Manugenerator:
         groups = list(grouppedBom.values())
         groups.sort(key=lambda g: (getReference(g[0])[:1], len(g)))
 
-        with open(sourcingListName, "w") as f:
+        with open(sourcingListName, "w", newline="") as f:
             self._makeSourcingBom(f, groups)
         zipFiles(zipName, outdir, [sourcingListName])
 
@@ -397,7 +397,7 @@ class Manugenerator:
             return
         glueStamps = sortGlueStamps(glueStamps)
         glueName = outdir / (self._project.getName() + "-PANEL-glue-pos.csv")
-        with open(glueName, "w") as f:
+        with open(glueName, "w", newline="") as f:
             writer = csv.writer(f)
             for i, (pos, dia) in enumerate(glueStamps):
                 stamp = GLUE_STAMPS[dia]
