@@ -13,7 +13,7 @@ package:
 	python3 -Bc "import pathlib; [p.rmdir() for p in pathlib.Path('.').rglob('__pycache__')]"
 
 	# Remove all prints in iBom version
-	releng/stripPythonPrints.py prusaman/resources/ibom/InteractiveHtmlBom/version.py | sponge prusaman/resources/ibom/InteractiveHtmlBom/version.py
+	releng/bakeIbomVersion.py prusaman/resources/ibom/InteractiveHtmlBom/version.py | sponge prusaman/resources/ibom/InteractiveHtmlBom/version.py
 
 	rm -rf dist/* build/lib/*
 	python3 setup.py sdist bdist_wheel

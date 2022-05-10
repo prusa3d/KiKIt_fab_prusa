@@ -12,6 +12,11 @@ class RemovePrints(ast.NodeTransformer):
             return ast.Pass()
         return node
 
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:
+        if node.name == "_get_git_version":
+            node.body = [ast.Return(ast.Name("LAST_TAG", ast.Load))]
+        return node
+
 if __name__ == "__main__":
     t = ast.parse(open(sys.argv[1]).read())
     RemovePrints().visit(t)
