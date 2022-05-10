@@ -15,7 +15,7 @@ jobs:
           sudo add-apt-repository --yes ppa:kicad/kicad-6.0-releases
           sudo apt-get update
           sudo apt-get -qq install --yes --no-install-recommends \
-            kicad zip git python3 python3-pip moreutils
+            kicad zip git python3 python3-pip moreutils bats
           python -m pip install -e .\[dev\]
       - name: Build PCM package
         run: make package pcm
@@ -31,3 +31,5 @@ jobs:
           name: prusaman-python-package
           path: dist/
           retention-days: 7
+      - name: Test prusaman
+        run: make test

@@ -45,5 +45,13 @@ build/pcm.zip: package $(PCM_RESOURCES)
 		-s versions.-1.download_url=\"TBA\" \
 		build/pcm-metadata.json build/pcm-metadata.json
 
+test: test-system
+
+test-system: build/test $(shell find prusaman -type f)
+	cd build/test && bats ../../test/system
+
+build/test:
+	mkdir -p $@
+
 clean:
 	rm -rf dist build
