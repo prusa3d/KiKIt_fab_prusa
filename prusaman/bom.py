@@ -60,7 +60,7 @@ class PnBFilter(BomFilter):
             pnb = getField(symbol, n)
             if pnb is not None:
                 assert isinstance(pnb, str)
-                pnbLower = pnb.lower()
+                pnbLower = pnb.lower().strip()
                 if pnbLower not in allowedValues:
                     raise RuntimeError(
                         f"Component {getReference(symbol)} " + \

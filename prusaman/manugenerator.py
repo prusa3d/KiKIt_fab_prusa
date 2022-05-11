@@ -9,7 +9,7 @@ import sys
 from itertools import chain
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union, TextIO
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, Union, TextIO
 
 import pcbnew # type: ignore
 
@@ -265,6 +265,7 @@ class Manugenerator:
         outdir.mkdir(parents=True, exist_ok=True)
 
         sourcingListName = outdir / (self._project.getName() + "_BOM.csv")
+        newSourcingListName = outdir / (self._project.getName() + "_new_BOM.csv")
         zipName = outdir / (self._project.getName() + "_BOM.zip")
 
         bomFilter = self._bomFilter
@@ -273,15 +274,19 @@ class Manugenerator:
         bom = [x for x in bom if bomFilter.sourcingFilter(x)]
 
         grouppedBom = groupBy(bom, key=lambda c: (
+            getField(c, "ID"),
             getField(c, "Footprint"),
             getField(c, "Value"),
-            getField(c, "part_value")
         ))
         groups = list(grouppedBom.values())
         groups.sort(key=lambda g: (getReference(g[0])[:1], len(g)))
 
         with open(sourcingListName, "w", newline="") as f:
             self._makeSourcingBom(f, groups)
+
+        with open(newSourcingListName, "w", newline="") as f:
+            self._makeNewSourcingBom(f, groups, bomFilter)
+
         zipFiles(zipName, outdir, [sourcingListName])
 
     def _makeSourcingBom(self, bomFile: TextIO, groups: List[List[Symbol]]) -> None:
@@ -325,6 +330,26 @@ class Manugenerator:
                 sameField("part_value"),
                 nonEmptyField("alt")
             ])
+
+    def _makeNewSourcingBom(self, bomFile: TextIO, groups: List[List[Symbol]],
+                            bomFilter: BomFilter) -> None:
+        writer = csv.writer(bomFile)
+        writer.writerow(["Id", "Component", "Quantity per PCB", "Value"])
+
+        for i, group in enumerate(groups):
+            if len(group) == 0 or not bomFilter.assemblyFilter(group[0]):
+                continue
+            writer.writerow([
+                getField(group[0], "ID"), i + 1, len(group),
+                getField(group[0], "Value")])
+        writer.writerow([])
+        writer.writerow([])
+        for i, group in enumerate(groups):
+            if len(group) == 0 or bomFilter.assemblyFilter(group[0]):
+                continue
+            writer.writerow([
+                getField(group[0], "ID"), i + 1, len(group),
+                getField(group[0], "Value")])
 
     def _makeSmtBomFile(self, bomFile: TextIO, bom: List[Symbol]) -> None:
         def required(symbol: Symbol, field: str) -> str:
