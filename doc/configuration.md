@@ -30,11 +30,13 @@ Prusaman podporuje dva typy filtrování BOMu:
   [Confluence](https://cfl.prusa3d.com/pages/viewpage.action?pageId=41468219)),
   který se řídí hvězdičkou v políčku ID.
 - `pnb` – je nový styl. Pokud má symbol pole `PnB`, tak:
-    - `#` – neosazuji, nanakupuji
-    - `dnf` – neozsazuji, nenakupuji
+    - `#` – neosazuji, nakupuji
+    - `dnf` – *ne*osazuji, *ne*nakupuji
     - `` (prázdné pole) – osazuji, nakupuji
 
-Doporučujeme používat styl `pnb` jelikož je inutitivnější.
+Doporučujeme používat styl `pnb` jelikož je inutitivnější. Zároveň se u všech
+stylů ignorují symboly, jejižch reference začíná na jedno z: `#` (symboly
+napájení), `M`, `NT`, `G`.
 
 ## Specifikace panelu
 
