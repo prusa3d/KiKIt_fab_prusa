@@ -7,11 +7,16 @@ from pathlib import Path
 PKG_BASE = Path(__file__).resolve().parent
 
 def ensurePip():
-    try:
-        subprocess.run([sys.executable, "-m", "pip", "--help"],
-            capture_output=True, check=True)
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError("Missing pip, cannot install backend.") from None
+    r = subprocess.run([sys.executable, "-m", "pip", "--help"], capture_output=True)
+    if r.returncode == 0:
+        return
+    r = subprocess.run([sys.executable, "-m", "ensurepip"], capture_output=True)
+    if r != 0:
+        raise RuntimeError(f"Missing pip, ensurepip failed with: {r.stdout}\n{r.stderr}")
+    r = subprocess.run([sys.executable, "-m", "pip", "--help"], capture_output=True)
+    if r.returncode == 0:
+        return
+    raise RuntimeError(f"Missing pip, cannot install backend: {r.stdout}\n{r.stderr}")
 
 def locateWhl():
     for x in PKG_BASE.glob("*.whl"):
