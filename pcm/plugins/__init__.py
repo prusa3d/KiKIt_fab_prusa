@@ -10,9 +10,7 @@ def ensurePip():
     r = subprocess.run([sys.executable, "-m", "pip", "--help"], capture_output=True)
     if r.returncode == 0:
         return
-    r = subprocess.run([sys.executable, "-m", "ensurepip"], capture_output=True)
-    if r != 0:
-        raise RuntimeError(f"Missing pip, ensurepip failed with: {r.stdout}\n{r.stderr}")
+    subprocess.run([sys.executable, "-m", "ensurepip"], capture_output=True)
     r = subprocess.run([sys.executable, "-m", "pip", "--help"], capture_output=True)
     if r.returncode == 0:
         return
