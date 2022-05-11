@@ -30,7 +30,7 @@ def stderrReporter(tag: str, message: str) -> None:
 
 def replaceDirectory(target: Union[Path, str], source: Union[Path, str]) -> None:
     shutil.rmtree(target)
-    os.rename(source, target)
+    shutil.move(source, target)
 
 from kikit.eeschema_v6 import Symbol as SymbolV6 # type: ignore
 from kikit.fab.common import extractComponents, getField, getReference # type: ignore
