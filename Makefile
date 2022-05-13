@@ -2,6 +2,7 @@
 .SHELLFLAGS += -e
 
 PCM_RESOURCES := $(shell find pcm -type f -print)
+KIKIT_URL ?= "https://github.com/yaqwsx/KiKit.git"
 
 .PHONY: package pcm
 
@@ -22,12 +23,21 @@ package:
 
 pcm: build/pcm.zip
 
-build/pcm.zip: package $(PCM_RESOURCES)
+build/kikit-src:
+	git clone $(KIKIT_URL) $@
+
+build/pcm.zip: package $(PCM_RESOURCES) build/kikit-src
 	rm -rf build/pcm build/prusaman.zip
 	mkdir -p build/pcm
 
 	cp -r pcm/* build/pcm
+
+	# Copy prusaman package
 	cp dist/*.whl build/pcm/plugins
+	# Update and copy kikit package
+	cd build/kikit-src && git pull && make package
+	cp build/kikit-src/dist/*.whl build/pcm/plugins
+
 	find build/pcm -name "*.pyc" -type f -delete
 	# Read version from git
 	releng/setJson.py \

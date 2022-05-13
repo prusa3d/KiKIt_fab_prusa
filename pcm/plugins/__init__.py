@@ -17,8 +17,7 @@ def ensurePip():
     raise RuntimeError(f"Missing pip, cannot install backend: {r.stdout}\n{r.stderr}")
 
 def locateWhl():
-    for x in PKG_BASE.glob("*.whl"):
-        return x.resolve()
+    return [x.resolve() for x in PKG_BASE.glob("*.whl")]
 
 def extractPackageVersion(path):
     assert isinstance(path, Path)
@@ -39,15 +38,16 @@ def installBackend():
         dialog.Pulse()
 
         if os.name == "nt":
+            packages = " ".join([winEsc(x) for x in locateWhl()])
             p = subprocess.Popen(
-                ["start", "cmd.exe", "/k", f"{winEsc(locatePythonWrapper())} && python -m pip install {winEsc(locateWhl())} && EXIT /B"],
+                ["start", "cmd.exe", "/k", f"{winEsc(locatePythonWrapper())} && python -m pip install {packages} && EXIT /B"],
                 stderr=subprocess.PIPE, stdout=subprocess.PIPE, stdin=subprocess.PIPE,
                 universal_newlines=True,
                 shell=True)
         else:
             ensurePip()
             p = subprocess.Popen(
-                [sys.executable, "-m", "pip", "install", locateWhl()],
+                [sys.executable, "-m", "pip", "install"] + locateWhl(),
                 stderr=subprocess.PIPE, stdout=subprocess.PIPE,
                 universal_newlines=True)
         while True:
@@ -62,9 +62,9 @@ def installBackend():
         dialog = None
 
         out = p.stdout.read()
-        err = p.stdout.read()
+        err = p.stderr.read()
         if retcode != 0:
-            raise RuntimeError(f"{out}\n{err}")
+            raise RuntimeError(f"({retcode}) {out}\n{err}")
     except Exception as e:
         wx.MessageBox(
             "Prusaman backend installation failed:\n\n" + str(e),
@@ -85,7 +85,12 @@ try:
     import prusaman
 
     installedVersion = prusaman.__version__
-    availableVersion = extractPackageVersion(locateWhl())
+    availableVersion = None
+    for x in locateWhl():
+        if x.name.startswith("Prusaman"):
+            availableVersion = extractPackageVersion(x)
+    if availableVersion is None:
+        raise RuntimeError("Missing backend installation package. Probably corrupted installation.")
 
     if installedVersion != availableVersion:
         result = wx.MessageBox(
