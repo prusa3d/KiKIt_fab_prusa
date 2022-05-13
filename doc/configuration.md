@@ -14,11 +14,7 @@ board_id: 1038 # Přidělené ID desky (shodné s datamatrixem)
 bom_filer: pnb # nebo legacy - viz Filtrování BOMu níže
 panel:
     type: kikit # nebo manual nebo script. Určuje, jak je tvořen panel
-    configuration:
-        layout:
-            rows: 2
-            cols: 2
-        # ...a další nastavení KiKitu. Stejná struktura jako JSON generovaný KiKit GUI
+    configuration: kikit.json # Cesta ke konfiguračnímu souboru KiKitu, který je možné vytvořit i z GUI
 ```
 
 Ukázkové projekty jsou k nalezení v adresáři [examples](examples).
@@ -42,9 +38,8 @@ napájení), `M`, `NT`, `G`.
 
 Panel je možné specifikovat pomocí jednoho ze třech nástrojů:
 - `kikit` – Použije se [KiKit](https://github.com/yaqwsx/KiKit) pro generování
-  panelu. V poli `configuration` je možné uvést parametry (stejně jako JSON
-  soubor, jen v YAMLu. KiKit bude v budoucích verzích přímo podporovat
-  generování YAMLu)
+  panelu. V poli `configuration` je možné uvést cestu k souboru s parametry,
+  který se píše buď ručně nebo tvoří pomocí GUI.
 - `script` – Použije se uživatelem dodaný skript pro výrobu panelu. Jména/cesta
   ke skriptu je předána v poli `script`. Očekává se, že skript dostane dva
   argumenty: `skript <cesta_ke_zdrojové_desce> <cesta_k_výstupu>`. Tato možnost
@@ -55,12 +50,14 @@ Panel je možné specifikovat pomocí jednoho ze třech nástrojů:
 
 ## Jak specifikovat panely dle Prusa Guide v KiKitu:
 
-- jako frame použít `tightframe`
-- pro vytvoření děr v technologickém okolí je možné KiKitu jako
-post-processingový skript uvést `{prusaman_scripts}/prusaTooling.py`, který vše
-vyřeší za vás.
+- jako frame použít `plugin`, `code` je `prusaman.Frame` a jako argument dostane
+  požadovanou utilizovanou výšku panelu (jedno z 143mm, 154mm, 196mm)
+- pro tvorbu tooling holes použít `plugin`, `code` je `prusaman.Tooling`.
+  Tooling plugin nemá žádné argumenty.
 - nezapomeň uvést v sekci `post`: `origin: bl` a v sekci `page`: `anchor: bl` a
   `posx: 0mm` a `posy: 0mm`.
+
+K dispozici je [příklad](examples/simple_pnb/kikit.json).
 
 # Šablony a argumenty
 

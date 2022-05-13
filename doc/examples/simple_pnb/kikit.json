@@ -1,0 +1,41 @@
+{
+    "layout": {
+        "hspace": "4mm",
+        "vspace": "4mm",
+        "rows": "3",
+        "cols": "4"
+    },
+    "tabs": {
+        "type": "fixed",
+        "vwidth": "2mm",
+        "hwidth": "2mm"
+    },
+    "framing": {
+        "type": "plugin",
+        "code": "prusaman.Framing",
+        "arg": "140mm"
+    },
+    "tooling": {
+        "type": "plugin",
+        "code": "prusaman.Tooling"
+    },
+    "text": {
+        "type": "simple",
+        "anchor": "mb",
+        "voffset": "-2.5mm",
+        "layer": "F.SilkS",
+        "width": "2.5mm",
+        "height": "2.5mm",
+        "thickness": "0.5mm",
+        "text": "Simple PnB Example | {date}"
+    },
+    "page": {
+        "anchor": "bl",
+        "posx": "0mm",
+        "posy": "0mm"
+    },
+    "post": {
+        "millradius": "1mm",
+        "origin": "bl"
+    }
+}

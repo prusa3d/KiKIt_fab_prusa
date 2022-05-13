@@ -4,7 +4,7 @@ import os
 import textwrap
 from io import StringIO
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 import schema  # type: ignore
 from ruamel.yaml import YAML
@@ -23,25 +23,30 @@ class Choice:
             return data
         raise schema.SchemaError(f"'{data}' is not one of allowed: {', '.join(self.allowed)}")
 
-class IsKiCADBoard:
-    def __init__(self, exists: bool=False):
+class Filepath:
+    def __init__(self, exists: Optional[bool]=False, extension: Optional[str]=None,
+                 base: Union[str, Path]=None):
         self.exists = exists
+        self.extension = extension
+        self.base = base
 
     def validate(self, data: Any) -> str:
         if not isinstance(data, str):
-            raise schema.SchemaError(f"KiCAD board file is not string; got {data}")
-        if not data.endswith(".kicad_pcb"):
-            raise schema.SchemaError(f"Extension of board file must be '.kicad_pcb'")
+            raise schema.SchemaError(f"Path is not string; got {data}")
+        if self.base is not None:
+            data = os.path.join(self.base, data)
+        if self.extension is not None and not data.endswith(self.extension):
+            raise schema.SchemaError(f"The file doesn't have extension {self.extension}")
         if self.exists and not os.path.exists(data):
             raise schema.SchemaError(f"'{data} doesn't exists")
         return data
 
 
 class PrusamanConfiguration:
-    def __init__(self, configuration: Dict[str, Any]) -> None:
+    def __init__(self, configuration: Dict[str, Any], base: Union[str, Path]) -> None:
         self.cfg: Dict[str, Any] = configuration
         try:
-            self._buildSchema().validate(self.cfg)
+            self._buildSchema(base).validate(self.cfg)
         except schema.SchemaError as e:
             raise RuntimeError(str(e)) from None
 
@@ -54,7 +59,7 @@ class PrusamanConfiguration:
             # Expand variables used in the configuration
             content = populateText(content)
             cfg = yaml.load(StringIO(content))
-            return cls(cfg)
+            return cls(cfg, os.path.dirname(path))
         except FileNotFoundError:
             raise FileNotFoundError(
                 f"Configuration file {path} doesn't exist.") from None
@@ -75,11 +80,11 @@ class PrusamanConfiguration:
         raise NotImplementedError("This is bug: Getting arbitrary objects is not supported")
 
     @staticmethod
-    def _buildSchema() -> schema.Schema:
+    def _buildSchema(base: Union[str, Path]) -> schema.Schema:
         from schema import And, Or, Schema
         manualPanel = {
             "type": "manual",
-            "source": IsKiCADBoard(exists=True)
+            "source": Filepath(exists=True, extension=".kicad_pcb", base=base)
         }
         scriptPanel = {
             "type": "script",
@@ -87,7 +92,7 @@ class PrusamanConfiguration:
         }
         kikitPanel = {
             "type": "kikit",
-            "configuration": dict
+            "configuration": Filepath(exists=True, extension=".json", base=base)
         }
         panelSchema = And(
             {

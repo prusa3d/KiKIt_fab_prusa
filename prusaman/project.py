@@ -81,3 +81,6 @@ class PrusamanProject:
 
     def getMillReadmeTemplate(self) -> Path:
         return self._projectdir / "readme.freza.template.txt"
+
+    def getDir(self) -> Path:
+        return self._projectdir

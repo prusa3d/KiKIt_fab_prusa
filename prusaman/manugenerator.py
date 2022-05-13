@@ -474,18 +474,12 @@ class Manugenerator:
     def _makeKikitPanel(self, cfg: Dict[str, Any], output: Path) -> None:
         from kikit import panelize_ui_impl as ki  # type: ignore
         from kikit.panelize_ui import doPanelization  # type: ignore
-        kikitCfg = cfg["configuration"]
+
+        cfgFile = self._project.getDir() / cfg["configuration"]
+
         input = self._project.getBoard()
-
-        with TemporaryDirectory() as tmpdir:
-            kikitCfgFile = Path(tmpdir) / "configuration.json"
-            with open(kikitCfgFile, "w") as f:
-                json.dump(kikitCfg, f)
-
-            os.environ["PRUSAMAN_PRUSA_LIB"] = str(RESOURCES / "prusalib.pretty")
-
-            preset = ki.obtainPreset([str(kikitCfgFile)])
-            doPanelization(str(input), str(output), preset)
+        preset = ki.obtainPreset([str(cfgFile)])
+        doPanelization(str(input), str(output), preset)
 
 
     def _makeScriptPanel(self, cfg: Dict[str, Any], output: Path) -> None:
