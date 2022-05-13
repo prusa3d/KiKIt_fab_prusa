@@ -55,6 +55,11 @@ class PrusamanExportBase ( wx.Dialog ):
 
 		buttonSizer = wx.BoxSizer( wx.HORIZONTAL )
 
+		self.versionLabel = wx.StaticText( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.versionLabel.Wrap( -1 )
+
+		buttonSizer.Add( self.versionLabel, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+
 
 		buttonSizer.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 

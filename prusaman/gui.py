@@ -1,6 +1,7 @@
 import pcbnew
 import wx
 import textwrap
+import prusaman
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from threading import Thread
@@ -36,6 +37,8 @@ class PrusamanExport(PrusamanExportBase):
         super().__init__(parent=None, *args, **kwargs)
 
         self.SetIcon(wx.Icon(str(RESOURCES / "icons" / "exportIcon.png")))
+        self.SetTitle(f"Prusaman Export  (version {prusaman.__version__})")
+        self.versionLabel.SetLabel(f"Prusaman version ({prusaman.__version__})")
 
         self.projectPath = Path(projectPath)
         self.triggered = False
