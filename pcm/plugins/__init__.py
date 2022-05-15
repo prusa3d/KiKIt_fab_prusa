@@ -38,9 +38,11 @@ def installBackend():
         dialog.Pulse()
 
         if os.name == "nt":
-            packages = " ".join([winEsc(x) for x in locateWhl()])
+            sources = locateWhl()
+            dirname = sources[0].parent
+            packages = " ".join([x.name for x in sources])
             p = subprocess.Popen(
-                ["start", "cmd.exe", "/k", f"{winEsc(locatePythonWrapper())} && python -m pip install {packages} && EXIT /B"],
+                ["start", "cmd.exe", "/k", f"{winEsc(locatePythonWrapper())} && cd {dirname} && python -m pip install {packages} && EXIT /B"],
                 stderr=subprocess.PIPE, stdout=subprocess.PIPE, stdin=subprocess.PIPE,
                 universal_newlines=True,
                 shell=True)
