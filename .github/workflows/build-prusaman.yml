@@ -16,6 +16,8 @@ jobs:
           sudo apt-get update
           sudo apt-get -qq install --yes --no-install-recommends \
             kicad zip git python3 python3-pip moreutils bats
+          # Install devel version of KiKit
+          python -m pip install git+https://github.com/yaqwsx/KiKit@master
           python -m pip install -e .\[dev\]
       - name: Build PCM package
         run: make package pcm
