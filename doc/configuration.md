@@ -70,5 +70,6 @@ Podporovány jsou následující proměnné:
 - `size` – velikost desky k níž se panel vztahuje
 - `dmc` – informace o datamatrixu symbolech (poloha + popisek)
 - `date` – dnešní datum
-- `prusaman_scripts` - složka obsahující zabudované skripty Prusamanu (aktuálně
-  je to pouze skript `prusaTooling.py`)
+
+a zároveň všechny proměnné, které podporuje KiKit
+([dokumentace](https://github.com/yaqwsx/KiKit/blob/master/doc/panelizeCli.md#available-variables-in-text))

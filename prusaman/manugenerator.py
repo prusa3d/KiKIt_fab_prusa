@@ -472,14 +472,18 @@ class Manugenerator:
             raise RuntimeError(f"Cannot copy {cfg['source']} into final destination")
 
     def _makeKikitPanel(self, cfg: Dict[str, Any], output: Path) -> None:
+        self._reportInfo("KIKIT", "Starting panel")
         from kikit import panelize_ui_impl as ki  # type: ignore
         from kikit.panelize_ui import doPanelization  # type: ignore
 
         cfgFile = self._project.getDir() / cfg["configuration"]
 
+        os.environ["PRUSAMAN_SOURCE_PROJECT"] = str(self._project.getDir())
+
         input = self._project.getBoard()
         preset = ki.obtainPreset([str(cfgFile)])
         doPanelization(str(input), str(output), preset)
+        self._reportInfo("KIKIT", "Panel finished")
 
 
     def _makeScriptPanel(self, cfg: Dict[str, Any], output: Path) -> None:

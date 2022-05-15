@@ -3,6 +3,7 @@ __version__ = get_versions()['version']
 del get_versions
 
 # Bring the plugins to the top level package
-from .kikitPlugins import Tooling, Framing
+from .kikitPlugins import Tooling, Framing, Text
 tooling = Tooling
 framing = Framing
+text = Text

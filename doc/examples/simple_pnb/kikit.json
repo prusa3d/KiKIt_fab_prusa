@@ -27,7 +27,8 @@
         "width": "2.5mm",
         "height": "2.5mm",
         "thickness": "0.5mm",
-        "text": "Simple PnB Example | {date}"
+        "text": "{boardTitle} | {date} | {boardCompany} | ID: {boardId}",
+        "plugin": "prusaman.Text"
     },
     "page": {
         "anchor": "bl",

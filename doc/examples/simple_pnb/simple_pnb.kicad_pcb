@@ -5,6 +5,13 @@
   )
 
   (paper "A4")
+  (title_block
+    (title "Example PnB")
+    (rev "10")
+    (company "Prusa")
+    (comment 1 "ABC")
+  )
+
   (layers
     (0 "F.Cu" signal)
     (31 "B.Cu" signal)

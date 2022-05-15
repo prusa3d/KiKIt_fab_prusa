@@ -3,16 +3,7 @@ import pcbnew # type: ignore
 from .pcbnew_common import findBoardBoundingBox
 from .params import RESOURCES
 from datetime import datetime
-
-class Formatter:
-    def __init__(self, fn: Callable[[], str]) -> None:
-        self.fn = fn
-        self.value: Optional[str] = None
-
-    def __str__(self) -> str:
-        if self.value is None:
-            self.value = self.fn()
-        return self.value
+from kikit.text import Formatter
 
 def formatBoardSize(board: Optional[pcbnew.BOARD]) -> str:
     if board is None:
@@ -51,8 +42,15 @@ def populateText(template: str, board: Optional[pcbnew.BOARD]=None,
         "size": Formatter(lambda: formatBoardSize(board)),
         "dmc": Formatter(lambda: formatDatamatrixInfo(board, boardId)),
         "date": Formatter(lambda: datetime.today().strftime("%Y-%m-%d")),
-        "prusaman_scripts": str(RESOURCES / "kikitscripts")
+        "boardTitle": Formatter(lambda: board.GetTitleBlock().GetTitle()),
+        "boardDate": Formatter(lambda: board.GetTitleBlock().GetDate()),
+        "boardRevision": Formatter(lambda: board.GetTitleBlock().GetRevision()),
+        "boardCompany": Formatter(lambda: board.GetTitleBlock().GetCompany())
     }
+
+    for i in range(10):
+        attribs[f"boardComment{i + 1}"] = Formatter(lambda: board.GetTitleBlock().GetComment(i))
+
     try:
         return template.format(**attribs)
     except KeyError as e:
