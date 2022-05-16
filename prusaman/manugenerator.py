@@ -528,6 +528,7 @@ class Manugenerator:
     def _makeIbom(self, source: Path, outdir: Path) -> None:
         ibomBinary = RESOURCES / "ibom" / "InteractiveHtmlBom" / "generate_interactive_bom.py"
         command = [locatePythonInterpreter(), str(ibomBinary), "--no-browser",
+                   "--dark-mode", "--extra-fields", "ID",
                    "--name-format", "%f-ibom",
                    "--dest-dir", str(outdir), str(source)]
         result = subprocess.run(command, capture_output=True)
