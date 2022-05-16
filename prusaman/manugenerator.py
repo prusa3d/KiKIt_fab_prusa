@@ -233,6 +233,7 @@ class Manugenerator:
         self._makePanelReadme(outdir, boardPath=outfile)
 
     def _makeMillStage(self) -> None:
+        self._reportInfo("MILL", "Starting MILL stage")
         panelName = self._fileName("PANEL")
         panelPath = self._outputdir / panelName / (panelName + ".kicad_pcb")
 
@@ -247,8 +248,10 @@ class Manugenerator:
         pcbnew.SaveBoard(str(outfile), panel)
         makeGerbers(panel, outdir, lambda _: set([pcbnew.Edge_Cuts]))
         self._makeMillReadme(outdir, panel)
+        self._reportInfo("MILL", "Mill stage finished")
 
     def _makeSmtStage(self) -> None:
+        self._reportInfo("SMT", "Starting SMT stage")
         smtName = self._fileName("SMT")
         outdir = self._outputdir / smtName
         outdir.mkdir(parents=True, exist_ok=True)
@@ -278,8 +281,10 @@ class Manugenerator:
         panelPath = self._outputdir / panelName / (panelName + ".kicad_pcb")
 
         self._makeGlueStamps(outdir, panelPath)
+        self._reportInfo("SMT", "SMT stage finished")
 
     def _makeSourcingStage(self) -> None:
+        self._reportInfo("SOURCING", "Starting sourcing stage")
         sourcingName = self._fileName("NAKUP")
         outdir = self._outputdir / sourcingName
         outdir.mkdir(parents=True, exist_ok=True)
@@ -309,6 +314,7 @@ class Manugenerator:
             self._makeNewSourcingBom(f, groups, bomFilter)
 
         zipFiles(zipName, outdir, [sourcingListName])
+        self._reportInfo("SOURCING", "Sourcing stage finished")
 
     def _makeSourcingBom(self, bomFile: TextIO, groups: List[List[Symbol]]) -> None:
         writer = csv.writer(bomFile)
