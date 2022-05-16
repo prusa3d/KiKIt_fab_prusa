@@ -1,9 +1,13 @@
 {
     "layout": {
-        "hspace": "4mm",
-        "vspace": "4mm",
-        "rows": "3",
-        "cols": "4"
+        "hspace": "3mm",
+        "vspace": "3mm",
+        "rows": "4",
+        "cols": "4",
+        "hbackbone": "5mm",
+        "vbackbone": "5mm",
+        "hboneskip": 1,
+        "vboneskip": 1
     },
     "tabs": {
         "type": "fixed",
