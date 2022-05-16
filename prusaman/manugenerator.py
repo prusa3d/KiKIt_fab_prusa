@@ -38,6 +38,25 @@ from kikit.fab.common import extractComponents, getField, getReference # type: i
 SymbolV5 = Dict[str, Any]
 Symbol = Union[SymbolV6, SymbolV5]
 
+def checkAnnotation(bom: List[Symbol]) -> None:
+    unann = []
+    wrongAnn = []
+    for s in bom:
+        ref = getReference(s)
+        if "?" in ref:
+            unann.append(ref)
+            continue
+        text, num = splitOn(ref, lambda x: not x.isdigit())
+        if not num.isdigit():
+            wrongAnn.append(ref)
+    message = ""
+    if len(unann) > 0:
+        message += f"There are {len(unann)} components unannotated in the schematic\n"
+    if len(wrongAnn) > 0:
+        message += "The following components have invalid annotation: " + ", ".join(wrongAnn)
+    if len(message) > 0:
+        raise RuntimeError(message)
+
 def naturalComponetKey(component: Symbol) -> Tuple[str, int]:
     text, num = splitOn(getReference(component), lambda x: not x.isdigit())
     return str(text), int(num)
@@ -244,6 +263,7 @@ class Manugenerator:
         bomFilter = self._bomFilter
 
         bom = extractComponents(str(self._project.getSchema()))
+        checkAnnotation(bom)
         bom = [x for x in bom if bomFilter.assemblyFilter(x)]
         bom.sort(key=naturalComponetKey)
 
@@ -271,6 +291,7 @@ class Manugenerator:
         bomFilter = self._bomFilter
 
         bom = extractComponents(str(self._project.getSchema()))
+        checkAnnotation(bom)
         bom = [x for x in bom if bomFilter.sourcingFilter(x)]
 
         grouppedBom = groupBy(bom, key=lambda c: (
