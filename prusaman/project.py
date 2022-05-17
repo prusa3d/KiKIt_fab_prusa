@@ -31,47 +31,19 @@ class PrusamanProject:
             candidate = item.name
         if candidate is not None:
             return candidate[:-len(".kicad_pro")]
-        return PrusamanProject._resolveProjectNameV5(path)
-
-    @staticmethod
-    def _resolveProjectNameV5(path: Path) -> str:
-        candidate: Optional[str] = None
-        for item in path.iterdir():
-            if not item.name.endswith(".pro"):
-                continue
-            if candidate is not None:
-                raise RuntimeError(f"There are multiple projects ({candidate} " +
-                                   f"and {item.name}) in directory {path}. Not " +
-                                   f"clear which one to choose.")
-            candidate = item.name
-        if candidate is not None:
-            return candidate[:-len(".pro")]
         raise RuntimeError(f"No project found in {path}")
-
-    @staticmethod
-    def _oneOf(*args: Path) -> Path:
-        for path in args:
-            if path.exists():
-                return path
-        raise FileNotFoundError("None of : " + ", ".join([str(x) for x in args]) + " exists")
 
     def getConfiguration(self) -> Path:
         return self._projectdir / "prusaman.yaml"
 
     def getProject(self) -> Path:
-        return self._oneOf(
-            self._projectdir / f"{self._name}.kicad_pro",
-            self._projectdir / f"{self._name}.pro"
-        )
+        return self._projectdir / f"{self._name}.kicad_pro"
 
     def getBoard(self) -> Path:
         return self._projectdir / f"{self._name}.kicad_pcb"
 
     def getSchema(self) -> Path:
-        return self._oneOf(
-            self._projectdir / f"{self._name}.kicad_sch",
-            self._projectdir / f"{self._name}.sch"
-        )
+        return self._projectdir / f"{self._name}.kicad_sch"
 
     def getName(self) -> str:
         return self._name

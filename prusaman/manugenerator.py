@@ -32,11 +32,7 @@ def replaceDirectory(target: Union[Path, str], source: Union[Path, str]) -> None
     shutil.rmtree(target)
     shutil.move(source, target)
 
-from kikit.eeschema_v6 import Symbol as SymbolV6 # type: ignore
-from kikit.fab.common import extractComponents, getField, getReference # type: ignore
-
-SymbolV5 = Dict[str, Any]
-Symbol = Union[SymbolV6, SymbolV5]
+from kikit.eeschema_v6 import Symbol, extractComponents, getField, getReference # type: ignore
 
 def checkAnnotation(bom: List[Symbol]) -> None:
     unann = []

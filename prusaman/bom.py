@@ -1,11 +1,8 @@
 from typing import Any, Dict, Optional, Union
-from kikit.eeschema_v6 import Symbol as SymbolV6 # type: ignore
+from kikit.eeschema_v6 import Symbol
 from kikit.fab.common import getField, getReference # type: ignore
 
 from prusaman.util import defaultTo
-
-SymbolV5 = Dict[str, Any]
-Symbol = Union[SymbolV6, SymbolV5]
 
 class BomFilter:
     """
