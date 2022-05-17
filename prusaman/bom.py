@@ -1,6 +1,5 @@
 from typing import Any, Dict, Optional, Union
-from kikit.eeschema_v6 import Symbol
-from kikit.fab.common import getField, getReference # type: ignore
+from kikit.eeschema_v6 import Symbol, getField, getReference # type: ignore
 
 from prusaman.util import defaultTo
 

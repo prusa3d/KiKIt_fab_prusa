@@ -8,12 +8,13 @@ import subprocess
 import sys
 from itertools import chain
 from pathlib import Path
-from tempfile import TemporaryDirectory
+from tempfile import NamedTemporaryFile
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, Union, TextIO
 
 import pcbnew # type: ignore
 
 from prusaman.bom import BomFilter, LegacyFilter, PnBFilter
+from prusaman.netlist import exportIBomNetlist
 
 from .configuration import PrusamanConfiguration
 from .export import makeDxf, makeGerbers
@@ -522,20 +523,31 @@ class Manugenerator:
         self._reportWarning("PANEL_SCRIPT", stderr)
 
     def _makeIbom(self, source: Path, outdir: Path) -> None:
-        ibomBinary = RESOURCES / "ibom" / "InteractiveHtmlBom" / "generate_interactive_bom.py"
-        command = [locatePythonInterpreter(), str(ibomBinary), "--no-browser",
-                   "--dark-mode", "--extra-fields", "ID",
-                   "--name-format", "%f-ibom",
-                   "--dest-dir", str(outdir), str(source)]
-        result = subprocess.run(command, capture_output=True)
-        stdout = result.stdout.decode("utf-8")
-        stderr = result.stderr.decode("utf-8")
-        if result.returncode != 0:
-            message = f"Ibom generation of {source} failed " + \
-                      f"with code {result.returncode} and output:\n{stdout}\n{stderr}"
-            raise RuntimeError(message)
-        self._reportInfo("IBOM", stdout)
-        self._reportWarning("IBOM", stderr)
+        with NamedTemporaryFile(mode="w", prefix="ibomnet_", suffix=".net",
+                                delete=False) as f:
+            try:
+                bom = extractComponents(str(self._project.getSchema()))
+                exportIBomNetlist(f, bom)
+                f.close()
+
+                ibomBinary = RESOURCES / "ibom" / "InteractiveHtmlBom" / "generate_interactive_bom.py"
+                command = [locatePythonInterpreter(), str(ibomBinary), "--no-browser",
+                        "--dark-mode", "--extra-fields", "ID",
+                        "--name-format", "%f-ibom",
+                        "--netlist-file", f.name,
+                        "--dest-dir", str(outdir), str(source)]
+                result = subprocess.run(command, capture_output=True)
+                stdout = result.stdout.decode("utf-8")
+                stderr = result.stderr.decode("utf-8")
+                if result.returncode != 0:
+                    message = f"Ibom generation of {source} failed " + \
+                            f"with code {result.returncode} and output:\n{stdout}\n{stderr}"
+                    raise RuntimeError(message)
+                self._reportInfo("IBOM", stdout)
+                self._reportWarning("IBOM", stderr)
+            finally:
+                f.close()
+                os.unlink(f.name)
 
     def _commonBomFilter(self, item: Symbol) -> bool:
         ref = getReference(item)
