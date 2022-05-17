@@ -10,9 +10,8 @@
         "vboneskip": 1
     },
     "tabs": {
-        "type": "fixed",
-        "vwidth": "2mm",
-        "hwidth": "2mm"
+        "type": "annotation",
+        "tabfootprints": "prusa_other:Tab_1mm,prusa_other:Tab_2mm"
     },
     "framing": {
         "type": "plugin",
