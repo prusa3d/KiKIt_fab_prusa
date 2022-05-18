@@ -52,7 +52,9 @@ class StdReporter:
 @click.option("--question", default="ask",
               type=click.Choice(["yes", "no", "ask"], case_sensitive=False),
     help="Decide how to handle interactive prompt")
-def make(source, outputdir, force, werror, silent, question):
+@click.option("--debug", is_flag=True,
+    help="Show stacktraces")
+def make(source, outputdir, force, werror, silent, question, debug):
     """
     Make manufacturing files for a project (SOURCE) into OUTPUTDIR.
     """
@@ -95,6 +97,8 @@ def make(source, outputdir, force, werror, silent, question):
     except Exception as e:
         sys.stderr.write(f"Error occurred: \n{textwrap.indent(str(e), '   ')}\n")
         sys.stderr.write("\nNo output files produced\n")
+        if debug:
+            raise e
 
 
 @click.command()

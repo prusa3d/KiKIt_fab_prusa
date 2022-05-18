@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import glob
 import json
 import os
 import shutil
@@ -246,6 +247,7 @@ class Manugenerator:
         outdir = self._outputdir / panelName
         outdir.mkdir(parents=True)
         outfile = outdir / (panelName + ".kicad_pcb")
+        gerberdir = outdir / (panelName + "-gerber")
 
         # Make the panel based on the configuration
         if self._project.has("kikit.json"):
@@ -258,11 +260,17 @@ class Manugenerator:
             raise RuntimeError("No recipe to make panel. " + \
                 "You miss one of kikit.json, panel.sh or panel/panel.kicad_pcb in the project.")
 
-        makeGerbers(source=outfile, outdir=outdir, layers=collectStandardLayers)
+        makeGerbers(source=outfile, outdir=gerberdir, layers=collectStandardLayers)
         self._makeIbom(source=self._project.getBoard(), outdir=outdir)
         shutil.copyfile(RESOURCES / "datamatrix_znaceni_zbozi_v2.pdf",
                         outdir / "datamatrix_znaceni_zbozi_v2.pdf")
         self._makePanelReadme(outdir, boardPath=outfile)
+
+        zipFiles(str(gerberdir) + ".zip", outdir,
+            glob.glob(str(outdir / "*.pdf")) +
+            glob.glob(str(outdir / "*.txt")) +
+            glob.glob(str(outdir / "*.html")) +
+            glob.glob(str(gerberdir / "*")))
 
     def _makeMillStage(self) -> None:
         self._reportInfo("MILL", "Starting MILL stage")
@@ -273,13 +281,18 @@ class Manugenerator:
         outdir = self._outputdir / millName
         outdir.mkdir(parents=True, exist_ok=True)
         outfile = outdir / (millName + ".kicad_pcb")
+        gerberdir = outdir / (millName + "-gerber")
 
         # Make the gerbers for board that has no features other than cuts
         panel = pcbnew.LoadBoard(str(panelPath))
         preserveOnlyOutline(panel, set(MILL_RELEVANT_FOOTPRINTS))
         pcbnew.SaveBoard(str(outfile), panel)
-        makeGerbers(panel, outdir, lambda _: set([pcbnew.Edge_Cuts]))
+        makeGerbers(panel, gerberdir, lambda _: set([pcbnew.Edge_Cuts]))
         self._makeMillReadme(outdir, panel)
+        zipFiles(str(outdir / (millName + ".zip")), outdir,
+            glob.glob(str(outdir / "*.txt")) +
+            glob.glob(str(outdir / "*.html")) +
+            glob.glob(str(gerberdir / "*")))
         self._reportInfo("MILL", "Mill stage finished")
 
     def _makeSmtStage(self) -> None:
@@ -307,7 +320,11 @@ class Manugenerator:
         with open(bomName, "w", newline="") as bomFile:
             self._makeSmtBomFile(bomFile, bom)
 
-        zipFiles(zipName, outdir, [posName, bomName])
+        zipFiles(zipName, outdir,
+            glob.glob(str(outdir / "*.txt")) +
+            glob.glob(str(outdir / "*.html")) +
+            glob.glob(str(outdir / "*.csv")) +
+            glob.glob(str(outdir / "*.dxf")))
 
         panelName = self._fileName("PANEL")
         panelPath = self._outputdir / panelName / (panelName + ".kicad_pcb")
@@ -471,7 +488,7 @@ class Manugenerator:
                 content = populateText(f.read(), panel, self._project.textVars["ID"])
         except FileNotFoundError as e:
             raise RuntimeError(f"Missing mill readme template. Please create the file {self._project.getMillReadmeTemplate()}") from None
-        with open(outdir / "README.txt", "w") as f:
+        with open(outdir / (self._fileName("FREZA") + "-README.txt"), "w") as f:
             f.write(content)
 
     def _makeGlueStamps(self, outdir: Path, panelPath: Path) -> None:
@@ -518,7 +535,7 @@ class Manugenerator:
                 content = populateText(f.read(), pcbnew.LoadBoard(str(boardPath)), self._project.textVars["ID"])
         except FileNotFoundError as e:
             raise RuntimeError(f"Missing panel readme template. Please create the file {self._project.getPanelReadmeTemplate()}") from None
-        with open(outdir / "README.txt", "w") as f:
+        with open(outdir / (self._fileName("PANEL") + "-README.txt"), "w") as f:
             f.write(content)
 
     def _fileName(self, prefix: str) -> str:

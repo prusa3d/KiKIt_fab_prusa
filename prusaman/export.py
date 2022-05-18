@@ -15,11 +15,9 @@ def makeGerbers(source: Union[Path, BOARD], outdir: Path,
     else:
         board = LoadBoard(str(source))
 
-    gerberSubdir = outdir / "gerber"
-
     pctl = PLOT_CONTROLLER(board)
     popt = pctl.GetPlotOptions()
-    popt.SetOutputDirectory(str(gerberSubdir))
+    popt.SetOutputDirectory(str(outdir))
     popt.SetPlotFrameRef(False)
     popt.SetSketchPadLineWidth(FromMM(0.1))
     popt.SetUseGerberAttributes(False)
@@ -52,9 +50,9 @@ def makeGerbers(source: Union[Path, BOARD], outdir: Path,
 
     # Set metric format
     drlwriter.SetFormat(True, GENDRILL_WRITER_BASE.DECIMAL_FORMAT)
-    drlwriter.CreateDrillandMapFilesSet(str(gerberSubdir), aGenDrill=True, aGenMap=False)
+    drlwriter.CreateDrillandMapFilesSet(str(outdir), aGenDrill=True, aGenMap=False)
 
-    shutil.make_archive(str(outdir / "gerber"), "zip", str(gerberSubdir))
+    # shutil.make_archive(str(outdir / "gerber"), "zip", str(gerberSubdir))
 
 def makeDxf(source: Union[Path, BOARD], outdir: Path,
             layers: Callable[[BOARD], Set[int]]) -> None:
