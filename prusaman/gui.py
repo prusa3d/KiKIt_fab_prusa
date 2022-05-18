@@ -59,7 +59,7 @@ class PrusamanExport(PrusamanExportBase):
 
             if len(self.outDirSelector.GetPath()) == 0:
                 raise RuntimeError("No output directory specified")
-            outDir = Path(self.outDirSelector.GetPath())
+            outDir = Path(self.outDirSelector.GetPath()) / "Prusaman_Export"
             if outDir.exists():
                 answer = wx.MessageBox(
                     f"The output directory {outDir} already exists. " + \
@@ -117,10 +117,7 @@ class PrusamanExport(PrusamanExportBase):
                 self.onInfo("", "Finished, all files were successfully generated.")
 
             wx.CallAfter(lambda: self.outputProgressbar.SetValue(self.outputProgressbar.GetRange()))
-
-            wx.CallAfter(lambda:
-                wx.MessageBox("Export finished successfully", "Export finished",
-                              style=wx.OK | wx.ICON_INFORMATION))
+            wx.CallAfter(lambda: self.onFinish(outDir))
         except Exception as e:
             self.onError("", f"Error occured: {e}")
             reportException(e, traceback.format_exc())
@@ -150,6 +147,15 @@ class PrusamanExport(PrusamanExportBase):
         if len(tail) > 0:
             wx.CallAfter(lambda:
                 self.outputText.write(textwrap.indent("\n".join(tail), 20 * " ") + "\n"))
+
+    def onFinish(self, outdir):
+        answer = wx.MessageBox(
+            f"Export finished successfully.\nDo you want to open the output directory {outdir}?",
+            "Export finished",
+            wx.ICON_QUESTION | wx.YES_NO)
+        if answer == wx.NO:
+            return
+        wx.LaunchDefaultApplication(str(outdir))
 
 
 class ExportPlugin(pcbnew.ActionPlugin):
