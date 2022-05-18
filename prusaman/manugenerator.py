@@ -339,7 +339,6 @@ class Manugenerator:
         outdir.mkdir(parents=True, exist_ok=True)
 
         sourcingListName = outdir / (self._project.getName() + "_BOM.csv")
-        newSourcingListName = outdir / (self._project.getName() + "_new_BOM.csv")
         zipName = outdir / (self._project.getName() + "_BOM.zip")
 
         bomFilter = self._bomFilter
@@ -357,57 +356,12 @@ class Manugenerator:
         groups.sort(key=lambda g: (getReference(g[0])[:1], len(g)))
 
         with open(sourcingListName, "w", newline="") as f:
-            self._makeSourcingBom(f, groups)
-
-        with open(newSourcingListName, "w", newline="") as f:
-            self._makeNewSourcingBom(f, groups, bomFilter)
+            self._makeSourcingBom(f, groups, bomFilter)
 
         zipFiles(zipName, outdir, [sourcingListName])
         self._reportInfo("SOURCING", "Sourcing stage finished")
 
-    def _makeSourcingBom(self, bomFile: TextIO, groups: List[List[Symbol]]) -> None:
-        writer = csv.writer(bomFile)
-        writer.writerow([
-                "Component", "Description", "Part", "References", "Value",
-                "Footprint", "Quantity Per PCB", "Datasheet", "req", "ID",
-                "part_value", "alt"
-            ])
-        for i, group in enumerate(groups):
-            group.sort(key=naturalComponetKey)
-            references = [getField(x, "Reference") for x in group]
-
-            def sameField(fieldName: str) -> str:
-                values = [getField(s, fieldName) for s in group]
-                if not all(values[0] == x for x in values):
-                    self._reportWarning("SOURCING",
-                        f"Components {', '.join(references)} should have the same " +
-                        f"field {fieldName}, but it differs")
-                return defaultTo(values[0], "")
-
-            def nonEmptyField(fieldName: str) -> str:
-                for s in group:
-                    field = getField(s, fieldName)
-                    if field is not None:
-                        assert isinstance(field, str)
-                        return field
-                return ""
-
-            writer.writerow([
-                i,
-                sameField("Description"),
-                sameField("Value"),
-                " ".join(references),
-                sameField("Value"),
-                sameField("Footprint").split(":", 1)[-1],
-                len(group),
-                nonEmptyField("Datasheet"),
-                sameField("req"),
-                sameField("ID"),
-                sameField("part_value"),
-                nonEmptyField("alt")
-            ])
-
-    def _makeNewSourcingBom(self, bomFile: TextIO, groups: List[List[Symbol]],
+    def _makeSourcingBom(self, bomFile: TextIO, groups: List[List[Symbol]],
                             bomFilter: BomFilter) -> None:
         writer = csv.writer(bomFile)
         writer.writerow(["Id", "Component", "Quantity per PCB", "Value"])
