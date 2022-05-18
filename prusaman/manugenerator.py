@@ -462,9 +462,12 @@ class Manugenerator:
                         boardPath: Path) -> None:
         sourceBoard = pcbnew.LoadBoard(str(boardPath))
         writer = csv.writer(posFile)
-        writer.writerow(["Ref", "Val", "Package", "PosX", "PosY", "Rot", "Side"])
+        writer.writerow(["Ref", "Val", "Package", "PosX", "PosY", "Rot", "Side", "ID"])
         for item in bom:
             ref = getReference(item)
+            id = getField(item, "ID")
+            if id is None:
+                raise RuntimeError(f"Component {ref} has no ID but should be populated")
 
             f = sourceBoard.FindFootprintByReference(getReference(item))
             if f is None:
@@ -479,7 +482,8 @@ class Manugenerator:
                 pcbnew.ToMM(pos[0]),
                 pcbnew.ToMM(pos[1]),
                 f.GetOrientation() / 10,
-                layerToSide(f.GetLayer())
+                layerToSide(f.GetLayer()),
+                id
             ])
 
     def _makeMillReadme(self, outdir: Path, panel: pcbnew.BOARD) -> None:
