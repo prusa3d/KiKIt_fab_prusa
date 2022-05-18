@@ -259,7 +259,7 @@ class Manugenerator:
                 "You miss one of kikit.json, panel.sh or panel/panel.kicad_pcb in the project.")
 
         makeGerbers(source=outfile, outdir=outdir, layers=collectStandardLayers)
-        self._makeIbom(source=outfile, outdir=outdir)
+        self._makeIbom(source=self._project.getBoard(), outdir=outdir)
         shutil.copyfile(RESOURCES / "datamatrix_znaceni_zbozi_v2.pdf",
                         outdir / "datamatrix_znaceni_zbozi_v2.pdf")
         self._makePanelReadme(outdir, boardPath=outfile)
