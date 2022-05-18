@@ -26,13 +26,27 @@ def exportIBomNetlist(file: TextIO, symbols: List[Symbol]) -> None:
     file.write("))")
 
 def exportSymbol(file: TextIO, symbol: Symbol) -> None:
+    properties = dict(symbol.properties.items())
+
+    pnbFieldVal = None
+    for n in ["PnB", "PNB", "pnb"]:
+        if n in properties:
+            pnbFieldVal = properties[n]
+    if pnbFieldVal is not None:
+        pnbFieldVal = pnbFieldVal.strip()
+        if pnbFieldVal.lower() == "dnf":
+            pnbFieldVal = "neosazovat a nenakupovat"
+        elif pnbFieldVal == "#":
+            pnbFieldVal = "neosazovat"
+        properties["Osazovat/Nakupovat"] = pnbFieldVal
+
     file.write("(comp ")
-    file.write(f'(ref "{symbol.properties["Reference"]}") ')
-    file.write(f'(value "{symbol.properties["Value"]}") ')
-    file.write(f'(footprint "{symbol.properties["Footprint"]}") ')
+    file.write(f'(ref "{properties["Reference"]}") ')
+    file.write(f'(value "{properties["Value"]}") ')
+    file.write(f'(footprint "{properties["Footprint"]}") ')
 
     file.write("(fields ")
-    for key, value in symbol.properties.items():
+    for key, value in properties.items():
         if key in ["Reference", "Value", "Footprint"]:
             continue
         file.write(f'(field (name "{key}") "{value}") ')

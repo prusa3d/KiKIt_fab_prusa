@@ -532,7 +532,7 @@ class Manugenerator:
 
                 ibomBinary = RESOURCES / "ibom" / "InteractiveHtmlBom" / "generate_interactive_bom.py"
                 command = [locatePythonInterpreter(), str(ibomBinary), "--no-browser",
-                        "--dark-mode", "--extra-fields", "ID,PnB",
+                        "--dark-mode", "--extra-fields", "ID,Osazovat/Nakupovat",
                         "--name-format", "%f-ibom",
                         "--netlist-file", f.name,
                         "--dest-dir", str(outdir), str(source)]
