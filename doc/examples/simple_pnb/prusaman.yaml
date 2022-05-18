@@ -1,6 +1,0 @@
-revision: 10 # Board revision number
-board_id: 1038 # ID for datamatrix
-bom_filter: pnb
-panel:
-    type: kikit
-    configuration: kikit.json

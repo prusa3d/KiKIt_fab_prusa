@@ -2,12 +2,12 @@ import os
 from pcbnew import wxPointMM, FootprintLoad, UTF8, ToMM
 from typing import Any, Dict, Iterable
 from kikit.plugin import FramingPlugin, ToolingPlugin, TextVariablePlugin
+from kikit.text import Formatter
 from kikit.panelize import Panel
 from kikit.units import mm, readLength
 from kikit.substrate import Substrate
 from prusaman.params import RESOURCES
 from prusaman.project import PrusamanProject
-from prusaman.configuration import PrusamanConfiguration
 from shapely.geometry import LineString, box
 
 
@@ -81,8 +81,7 @@ class Framing(FramingPlugin):
 class Text(TextVariablePlugin):
     def variables(self) -> Dict[str, Any]:
         project = PrusamanProject(os.environ["PRUSAMAN_SOURCE_PROJECT"])
-        cfg = PrusamanConfiguration.fromProject(project)
         return {
-            "boardId": cfg.cfg["board_id"],
-            "boardRevision": cfg.cfg["revision"]
+            "boardId": project.textVars["ID"],
+            "boardRevision": Formatter(lambda: project.board.GetTitleBlock().GetRevision())
         }

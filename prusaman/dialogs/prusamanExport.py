@@ -36,14 +36,6 @@ class PrusamanExportBase ( wx.Dialog ):
 		self.outDirSelector = wx.DirPickerCtrl( self, wx.ID_ANY, wx.EmptyString, u"Select output directory", wx.DefaultPosition, wx.DefaultSize, wx.DIRP_SMALL|wx.DIRP_USE_TEXTCTRL )
 		gridSizer.Add( self.outDirSelector, 0, wx.ALL|wx.EXPAND, 5 )
 
-		self.configurationLabel = wx.StaticText( self, wx.ID_ANY, u"Output configuration:", wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_RIGHT )
-		self.configurationLabel.Wrap( -1 )
-
-		gridSizer.Add( self.configurationLabel, 0, wx.ALL|wx.EXPAND, 10 )
-
-		self.configurationInput = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		gridSizer.Add( self.configurationInput, 0, wx.ALL|wx.EXPAND, 5 )
-
 
 		gridSizer.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 

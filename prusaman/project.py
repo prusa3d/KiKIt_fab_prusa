@@ -1,5 +1,9 @@
-from typing import Optional, Union
+import json
+from typing import Any, Dict, Optional, Union
 from pathlib import Path
+from functools import cached_property
+from prusaman.schema import Schema
+import pcbnew
 
 class PrusamanProject:
     """
@@ -33,9 +37,6 @@ class PrusamanProject:
             return candidate[:-len(".kicad_pro")]
         raise RuntimeError(f"No project found in {path}")
 
-    def getConfiguration(self) -> Path:
-        return self._projectdir / "prusaman.yaml"
-
     def getProject(self) -> Path:
         return self._projectdir / f"{self._name}.kicad_pro"
 
@@ -56,3 +57,23 @@ class PrusamanProject:
 
     def getDir(self) -> Path:
         return self._projectdir
+
+    def has(self, file: Union[str, Path]):
+        return (self._projectdir / file).exists()
+
+    @cached_property
+    def schema(self) -> Schema:
+        return Schema.fromFile(self.getSchema())
+
+    @property
+    def board(self) -> pcbnew.BOARD:
+        return pcbnew.LoadBoard(str(self.getBoard()))
+
+    @cached_property
+    def projectJson(self) -> Dict[str, Any]:
+        with open(self.getProject(), "r") as f:
+            return json.load(f)
+
+    @cached_property
+    def textVars(self) -> Dict[str, str]:
+        return self.projectJson.get("text_variables", {})

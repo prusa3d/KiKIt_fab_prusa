@@ -15,8 +15,8 @@ import pcbnew # type: ignore
 
 from prusaman.bom import BomFilter, LegacyFilter, PnBFilter
 from prusaman.netlist import exportIBomNetlist
+from prusaman.schema import Schema
 
-from .configuration import PrusamanConfiguration
 from .export import makeDxf, makeGerbers
 from .params import GLUE_STAMPS, MILL_RELEVANT_FOOTPRINTS, RESOURCES
 from .project import PrusamanProject
@@ -25,9 +25,14 @@ from .util import defaultTo, groupBy, splitOn, zipFiles, locatePythonInterpreter
 
 T = TypeVar("T")
 OutputReporter = Callable[[str, str], None]  # Takes TAG and message
+ContinuationPrompt = Callable[[str, str], bool] # Takes TAG, message and returns true if continue
 
 def stderrReporter(tag: str, message: str) -> None:
     sys.stderr.write(f"{tag}: {message}\n")
+
+def stdioPrompt(tag: str, message: str) -> None:
+    r = input(f"{tag}: {message} [y/N]:")
+    return r.lower() == "y"
 
 def replaceDirectory(target: Union[Path, str], source: Union[Path, str]) -> None:
     shutil.rmtree(target)
@@ -177,10 +182,9 @@ def sortGlueStamps(stamps: List[Tuple[pcbnew.wxPoint, int]]) -> List[Tuple[pcbne
 
 class Manugenerator:
     def __init__(self, project: PrusamanProject, outputdir: Union[str, Path],
-                 configuration: Optional[PrusamanConfiguration]=None,
-                 requestedConfig: Optional[str]=None,
-                 reportInfo: Optional[OutputReporter]= None,
-                 reportWarning: Optional[OutputReporter]= None) -> None:
+                 reportInfo: Optional[OutputReporter]=None,
+                 reportWarning: Optional[OutputReporter]=None,
+                 askContinuation: Optional[ContinuationPrompt]=None) -> None:
         """
         Construct the object that generates the output. This is an object
         instead of function, so we can implicitly pass reporters and other
@@ -195,19 +199,47 @@ class Manugenerator:
         - reportWarning: A callback to report warnings
         """
         self._project: PrusamanProject = project
-        self._cfg: PrusamanConfiguration = \
-            PrusamanConfiguration.fromProject(project) if configuration is None \
-            else configuration
         self._outputdir: Path = Path(outputdir)
-        self._requestedConfig = requestedConfig
         self._reportInfo: OutputReporter = defaultTo(reportInfo, stderrReporter)
         self._reportWarning: OutputReporter = defaultTo(reportWarning, stderrReporter)
+        self._askContinuation: ContinuationPrompt = defaultTo(askContinuation, stdioPrompt)
+
+    def _askWarning(self, tag: str, prompt: str, error: str) -> None:
+        if not self._askContinuation(tag, prompt):
+            raise RuntimeError(error)
 
     def make(self) -> None:
+        self._makeValidation()
         self._makePanelStage()
         self._makeMillStage()
         self._makeSmtStage()
         self._makeSourcingStage()
+
+    def _makeValidation(self) -> None:
+        sch = self._project.schema
+        board = self._project.board
+
+        self._validateProjectVars()
+        self._validateTitleBlock(sch, board)
+
+    def _validateTitleBlock(self, schema: Schema, board: pcbnew.BOARD) -> None:
+        schBlock = schema.titleBlock
+        pcbBlock = board.GetTitleBlock()
+
+        schRev = schBlock.get("rev", "").strip()
+        if schRev == "":
+            raise RuntimeError("Missing revision in schematics. Cannot continue.")
+        pcbRev = pcbBlock.GetRevision().strip()
+        if pcbRev == "":
+            raise RuntimeError("Missing revision in board. Cannot continue.")
+        if pcbRev != schRev:
+            self._askWarning("TITLE",
+                f"The revisions do not match (PCB: {pcbRev} vs SCH: {schRev}). Ignore error and continue?",
+                f"The revisions do not match (PCB: {pcbRev} vs SCH: {schRev}).")
+
+    def _validateProjectVars(self) -> None:
+        if "ID" not in self._project.textVars:
+            raise RuntimeError("The project has not ID specified")
 
     def _makePanelStage(self) -> None:
         panelName = self._fileName("PANEL")
@@ -216,12 +248,15 @@ class Manugenerator:
         outfile = outdir / (panelName + ".kicad_pcb")
 
         # Make the panel based on the configuration
-        panelCfg = self._cfg["panel"]
-        {
-            "manual": self._makeManualPanel,
-            "kikit": self._makeKikitPanel,
-            "script": self._makeScriptPanel
-        }[panelCfg["type"]](panelCfg, outfile)
+        if self._project.has("kikit.json"):
+            self._makeKikitPanel(outfile)
+        elif self._project.has("panel.sh"):
+            self._makeScriptPanel(outfile)
+        elif self._project.has("panel/panel.kicad_pcb"):
+            self._makeManualPanel(outfile)
+        else:
+            raise RuntimeError("No recipe to make panel. " + \
+                "You miss one of kikit.json, panel.sh or panel/panel.kicad_pcb in the project.")
 
         makeGerbers(source=outfile, outdir=outdir, layers=collectStandardLayers)
         self._makeIbom(source=outfile, outdir=outdir)
@@ -433,7 +468,7 @@ class Manugenerator:
     def _makeMillReadme(self, outdir: Path, panel: pcbnew.BOARD) -> None:
         try:
             with open(self._project.getMillReadmeTemplate(), "r") as f:
-                content = populateText(f.read(), panel, self._cfg["board_id"])
+                content = populateText(f.read(), panel, self._project.textVars["ID"])
         except FileNotFoundError as e:
             raise RuntimeError(f"Missing mill readme template. Please create the file {self._project.getMillReadmeTemplate()}") from None
         with open(outdir / "README.txt", "w") as f:
@@ -480,7 +515,7 @@ class Manugenerator:
     def _makePanelReadme(self, outdir: Path, boardPath: Path) -> None:
         try:
             with open(self._project.getPanelReadmeTemplate(), "r") as f:
-                content = populateText(f.read(), pcbnew.LoadBoard(str(boardPath)), self._cfg["board_id"])
+                content = populateText(f.read(), pcbnew.LoadBoard(str(boardPath)), self._project.textVars["ID"])
         except FileNotFoundError as e:
             raise RuntimeError(f"Missing panel readme template. Please create the file {self._project.getPanelReadmeTemplate()}") from None
         with open(outdir / "README.txt", "w") as f:
@@ -489,18 +524,19 @@ class Manugenerator:
     def _fileName(self, prefix: str) -> str:
         return f"{prefix}-{self._project.getName()}"
 
-    def _makeManualPanel(self, cfg: Dict[str, Any], output: Path) -> None:
+    def _makeManualPanel(self, output: Path) -> None:
+        source = self._project.getDir() / "panel" / "panel.kicad_pcb"
         try:
-            shutil.copyfile(cfg["source"], output)
+            shutil.copyfile(source, output)
         except FileNotFoundError:
-            raise RuntimeError(f"Cannot copy {cfg['source']} into final destination")
+            raise RuntimeError(f"Cannot copy {source} into final destination")
 
-    def _makeKikitPanel(self, cfg: Dict[str, Any], output: Path) -> None:
+    def _makeKikitPanel(self, output: Path) -> None:
         self._reportInfo("KIKIT", "Starting panel")
         from kikit import panelize_ui_impl as ki  # type: ignore
         from kikit.panelize_ui import doPanelization  # type: ignore
 
-        cfgFile = self._project.getDir() / cfg["configuration"]
+        cfgFile = self._project.getDir() / "kikit.json"
 
         os.environ["PRUSAMAN_SOURCE_PROJECT"] = str(self._project.getDir())
 
@@ -510,13 +546,13 @@ class Manugenerator:
         self._reportInfo("KIKIT", "Panel finished")
 
 
-    def _makeScriptPanel(self, cfg: Dict[str, Any], output: Path) -> None:
-        command = [cfg["script"], str(self._project.getBoard()), str(output)]
+    def _makeScriptPanel(self, output: Path) -> None:
+        command = [str(self._project / "panel.sh"), str(self._project.getBoard()), str(output)]
         result = subprocess.run(command, capture_output=True)
         stdout = result.stdout.decode("utf-8")
         stderr = result.stderr.decode("utf-8")
         if result.returncode != 0:
-            message = f"The script for building panel {cfg['script']} failed " + \
+            message = f"The script for building panel {command[0]} failed " + \
                       f"with code {result.returncode} and output:\n{stdout}\n{stderr}"
             raise RuntimeError(message)
         self._reportInfo("PANEL_SCRIPT", stdout)
@@ -583,8 +619,4 @@ class Manugenerator:
 
     @property
     def _bomFilter(self) -> BomFilter:
-        filters: Dict[str, Callable[[], BomFilter]] = {
-            "legacy": lambda: LegacyFilter(),
-            "pnb": lambda: PnBFilter(),
-        }
-        return filters[self._cfg["bom_filter"]]()
+        return PnBFilter()

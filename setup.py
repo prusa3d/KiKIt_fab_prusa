@@ -40,9 +40,8 @@ setuptools.setup(
     install_requires=[
         "kikit",
         "click>=7.1",
-        "schema==0.7.*",
         "ruamel.yaml==0.17.*",
-        "python-tsp==0.2.*"
+        "python-tsp==0.2.*",
     ],
     setup_requires=[
         "versioneer"

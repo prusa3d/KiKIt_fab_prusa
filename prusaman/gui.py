@@ -14,6 +14,7 @@ from .dialogs.prusamanExport import PrusamanExportBase, ErrorDialogBase
 from .project import PrusamanProject
 from .manugenerator import Manugenerator, replaceDirectory
 from .util import locatePythonInterpreter
+from .wxAnyThread import anythread
 
 class ErrorDialog(ErrorDialogBase):
     def __init__(self, error, details, parent=None, *args, **kwargs):
@@ -71,20 +72,14 @@ class PrusamanExport(PrusamanExportBase):
                     return
 
             project = PrusamanProject(self.projectPath)
-            if not project.getConfiguration().exists:
-                raise RuntimeError("This project is missing prusaman.yaml")
-
-            requestedConfiguration = self.configurationInput.GetValue()
-            if len(requestedConfiguration) == 0:
-                requestedConfiguration = None
             t = Thread(target=self.doExportWork, daemon=True,
-                       args=(outDir, project, requestedConfiguration))
+                       args=(outDir, project))
             t.start()
         except Exception as e:
             abandon()
             reportException(e, traceback.format_exc())
 
-    def doExportWork(self, outDir, project, requestedConfiguration):
+    def doExportWork(self, outDir, project):
         try:
             exception = None
             with TemporaryDirectory(prefix="prusaman_") as tmpdir:
@@ -92,9 +87,9 @@ class PrusamanExport(PrusamanExportBase):
                     nonlocal exception
                     try:
                         generator = Manugenerator(project, tmpdir,
-                                        requestedConfig=requestedConfiguration,
                                         reportInfo=self.onInfo,
-                                        reportWarning=self.onWarning)
+                                        reportWarning=self.onWarning,
+                                        askContinuation=self.onPrompt)
                         generator.make()
                     except Exception as e:
                         exception = e
@@ -135,6 +130,11 @@ class PrusamanExport(PrusamanExportBase):
 
     def onError(self, tag, message):
         self.addMessage("Error", tag, message)
+
+    @anythread
+    def onPrompt(self, tag, message):
+        answer = wx.MessageBox(message, tag, wx.ICON_QUESTION | wx.YES_NO)
+        return answer == wx.YES
 
     def addMessage(self, header, tag, message):
         if len(message) == 0:

@@ -81,6 +81,8 @@
     )
   )
 
+  (property "ID" "42")
+
   (net 0 "")
   (net 1 "Net-(D1-Pad1)")
   (net 2 "Net-(D1-Pad2)")

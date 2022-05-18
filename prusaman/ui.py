@@ -1,15 +1,18 @@
+from typing import Optional
 import click
 import sys
 import textwrap
 from . import __version__
-from .manugenerator import Manugenerator, PrusamanProject, replaceDirectory
+from .manugenerator import Manugenerator, PrusamanProject, replaceDirectory, stdioPrompt
 from tempfile import TemporaryDirectory
 from pathlib import Path
 
 class StdReporter:
-    def __init__(self, reportWarnings: bool, reportInfo: bool) -> None:
+    def __init__(self, reportWarnings: bool, reportInfo: bool,
+                 defaultAnswer: Optional[bool]) -> None:
         self._repW = reportWarnings
         self._repI = reportInfo
+        self._defAnswer = defaultAnswer
         self.triggered = False
 
     def warning(self, tag: str, message: str) -> None:
@@ -23,6 +26,10 @@ class StdReporter:
             return
         self._print("Info", tag, message)
 
+    def prompt(self, tag: str, prompt: str) -> None:
+        if self._defAnswer is not None:
+            return self._defAnswer
+        return stdioPrompt(tag, prompt)
 
     def _print(self, header: str, tag: str, message: str) -> None:
         BODY = 80
@@ -36,15 +43,16 @@ class StdReporter:
 @click.command()
 @click.argument("source", type=click.Path(file_okay=True, dir_okay=True, exists=True))
 @click.argument("outputdir", type=click.Path(file_okay=False, dir_okay=True))
-@click.option("--configuration", "-c", type=str, default=None,
-    help="Specify assembly configuration")
 @click.option("--force", "-f", is_flag=True,
     help="If existing path already contains files, overwrite them.")
 @click.option("--silent", "-s", is_flag=True,
     help="Report only errors")
 @click.option("--werror", "-w", is_flag=True,
     help="Treat warnings as errors")
-def make(source, outputdir, configuration, force, werror, silent):
+@click.option("--question", default="ask",
+              type=click.Choice(["yes", "no", "ask"], case_sensitive=False),
+    help="Decide how to handle interactive prompt")
+def make(source, outputdir, force, werror, silent, question):
     """
     Make manufacturing files for a project (SOURCE) into OUTPUTDIR.
     """
@@ -59,17 +67,24 @@ def make(source, outputdir, configuration, force, werror, silent):
             raise RuntimeError(f"Cannot produce output: {outputdir} already exists.\n" +
                                 "If you wish to rewrite the files, rerun the command with --force")
 
+        defaultAnswer = None
+        if question == "yes":
+            defaultAnswer = True
+        if question == "no":
+            defaultAnswer = False
+
         reporter = StdReporter(
             reportWarnings=(werror or not silent),
-            reportInfo=(not silent))
+            reportInfo=(not silent),
+            defaultAnswer=defaultAnswer)
 
         # We use temporary directory so we do not damage any existing files in
         # process. Once we are done, we atomically swap the directories
         with TemporaryDirectory(prefix="prusaman_") as tmpdir:
             generator = Manugenerator(project, tmpdir,
-                            requestedConfig=configuration,
                             reportInfo=reporter.info,
-                            reportWarning=reporter.warning)
+                            reportWarning=reporter.warning,
+                            askContinuation=reporter.prompt)
             generator.make()
 
             if werror and reporter.triggered:

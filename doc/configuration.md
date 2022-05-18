@@ -1,52 +1,29 @@
 # Nastavení projektu
 
-Celý projekt je řízen souborem `prusaman.yaml`. Ten obsahuje veškerá nastavení
-výrobního procesu. Zároveň se očekává, že v projektu budou existovat soubory
-`readme.freza.template.txt` a `readme.panel.template.txt`, které obsahují vzory
-readme souborů pro výrobní podklady. V těch je možno používat proměnné (viz
-níže).
-
-`prusaman.yaml` je [YAML soubor](https://www.cloudbees.com/blog/yaml-tutorial-everything-you-need-get-started), který má následující strukturu:
-
-```.yaml
-revision: 10 # Specifikace revize desky
-board_id: 1038 # Přidělené ID desky (shodné s datamatrixem)
-bom_filer: pnb # nebo legacy - viz Filtrování BOMu níže
-panel:
-    type: kikit # nebo manual nebo script. Určuje, jak je tvořen panel
-    configuration: kikit.json # Cesta ke konfiguračnímu souboru KiKitu, který je možné vytvořit i z GUI
-```
-
-Ukázkové projekty jsou k nalezení v adresáři [examples](examples).
+KiCAD projekt musí obsahovat textovou proměnnou `ID`, což je ID DMC. Dále jak schéma, tak i deska musí obsahovat shodné nastavení revize. Ukázkové projekty jsou k nalezení v adresáři [examples](examples).
 
 ## Filtrování BOMu
 
-Prusaman podporuje dva typy filtrování BOMu:
-- `legacy` – je původní styl (viz
-  [Confluence](https://cfl.prusa3d.com/pages/viewpage.action?pageId=41468219)),
-  který se řídí hvězdičkou v políčku ID.
-- `pnb` – je nový styl. Pokud má symbol pole `PnB`, tak:
+Nakupování/osazování se řídí pomocí pole `pnb` u značek:
     - `#` – neosazuji, nakupuji
     - `dnf` – *ne*osazuji, *ne*nakupuji
     - `` (prázdné pole) – osazuji, nakupuji
 
-Doporučujeme používat styl `pnb` jelikož je inutitivnější. Zároveň se u všech
-stylů ignorují symboly, jejižch reference začíná na jedno z: `#` (symboly
-napájení), `M`, `NT`, `G`.
+Zároveň se ignorují symboly, jejichž reference začíná na jedno z:
+`#` (symboly napájení), `M`, `NT`, `G`.
 
 ## Specifikace panelu
 
 Panel je možné specifikovat pomocí jednoho ze třech nástrojů:
-- `kikit` – Použije se [KiKit](https://github.com/yaqwsx/KiKit) pro generování
-  panelu. V poli `configuration` je možné uvést cestu k souboru s parametry,
-  který se píše buď ručně nebo tvoří pomocí GUI.
-- `script` – Použije se uživatelem dodaný skript pro výrobu panelu. Jména/cesta
-  ke skriptu je předána v poli `script`. Očekává se, že skript dostane dva
-  argumenty: `skript <cesta_ke_zdrojové_desce> <cesta_k_výstupu>`. Tato možnost
-  je vhodná, pokud si např. uživatel napsal vlastní panelizační skript pomocí
-  KiKitu (protože panel není možné naspecifikovat jen z CLI)
-- `manual` – Panel je manuálně nakreslen. V tento moment se v poli `source`
-  specifikuje cesta k panelu.
+- Použije se [KiKit](https://github.com/yaqwsx/KiKit) pro generování
+  panelu. Konfigurace se očekává v souboru `kikit.json`
+- Použije se uživatelem dodaný **skript** pro výrobu panelu. Skript se
+  musí jmenovat `panel.sh`. Očekává se, že skript dostane dva argumenty: `skript
+  <cesta_ke_zdrojové_desce> <cesta_k_výstupu>`. Tato možnost je vhodná, pokud si
+  např. uživatel napsal vlastní panelizační skript pomocí KiKitu (protože panel
+  není možné naspecifikovat jen z CLI)
+- Panel je manuálně nakreslen. Očekává se, že existuje jako
+  `panel/panel.kicad_pcb`
 
 ## Jak specifikovat panely dle Prusa Guide v KiKitu:
 
