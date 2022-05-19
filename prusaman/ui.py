@@ -103,7 +103,7 @@ def make(source, outputdir, force, werror, silent, question, debug):
         replaceDirectory(outputdir, tmpdir)
     except Exception as e:
         sys.stderr.write(f"Error occurred: \n{textwrap.indent(str(e), '   ')}\n")
-        sys.stderr.write(f"\nNo output files produced. The build artifacts are in {faileddir}\n")
+        sys.stderr.write(f"\nNo output files produced. Build artifacts are stored in {faileddir}\n")
         replaceDirectory(faileddir, tmpdir)
         if debug:
             raise e

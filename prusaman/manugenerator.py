@@ -523,13 +523,13 @@ class Manugenerator:
                         str(input), str(output)]
 
         r = subprocess.run(command, encoding="utf-8",
-            capture_output=True, cwd=self._project.getDir(), env=env, check=True)
-        if r.returncode != 0:
-            raise RuntimeError(f"Cannot make KiKit panel ({r.returncode}):\n{r.stdout}\n{r.stderr}")
+            capture_output=True, cwd=self._project.getDir(), env=env)
         if len(r.stdout) != 0:
             self._reportInfo("KIKIT", r.stdout)
         if len(r.stderr) != 0:
             self._reportWarning("KIKIT", r.stderr)
+        if r.returncode != 0:
+            raise RuntimeError(f"Cannot make KiKit panel. See log for further details.")
         self._reportInfo("KIKIT", "Panel finished")
 
 
