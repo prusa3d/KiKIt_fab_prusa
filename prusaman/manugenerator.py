@@ -316,7 +316,6 @@ class Manugenerator:
         bomFilter = self._bomFilter
 
         bom = extractComponents(str(self._project.getSchema()))
-        checkAnnotation(bom)
         bom = [x for x in bom if bomFilter.assemblyFilter(x)]
         bom.sort(key=naturalComponetKey)
 
@@ -441,7 +440,7 @@ class Manugenerator:
                 fpid.GetUniStringLibItemName(),
                 pcbnew.ToMM(pos[0]),
                 -pcbnew.ToMM(pos[1]),
-                ((f.GetOrientation() + 1800) % 3600) / 10,
+                ((f.GetOrientation()) % 3600) / 10,
                 layerToSide(f.GetLayer())
             ])
 

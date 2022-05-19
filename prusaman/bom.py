@@ -19,7 +19,7 @@ class BomFilter:
 
     def _commonFilter(self, symbol: Symbol) -> bool:
         ref = getReference(symbol)
-        return not any(ref.startswith(pref) for pref in self.SPECIAL_REFERENCES)
+        return symbol.unit == 1 and not any(ref.startswith(pref) for pref in self.SPECIAL_REFERENCES)
 
 class LegacyFilter(BomFilter):
     """
