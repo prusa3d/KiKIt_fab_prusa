@@ -416,7 +416,7 @@ class Manugenerator:
                         boardPath: Path) -> None:
         sourceBoard = pcbnew.LoadBoard(str(boardPath))
         writer = csv.writer(posFile)
-        writer.writerow(["Ref", "Val", "Package", "PosX", "PosY", "Rot", "Side", "ID"])
+        writer.writerow(["Ref", "ID", "Val", "Package", "PosX", "PosY", "Rot", "Side"])
         for item in bom:
             ref = getReference(item)
             id = getField(item, "ID")
@@ -431,13 +431,13 @@ class Manugenerator:
             fpid = f.GetFPID()
             writer.writerow([
                 f.GetReference(),
+                id,
                 f.GetValue(),
                 fpid.GetUniStringLibItemName(),
                 pcbnew.ToMM(pos[0]),
                 pcbnew.ToMM(pos[1]),
                 f.GetOrientation() / 10,
-                layerToSide(f.GetLayer()),
-                id
+                layerToSide(f.GetLayer())
             ])
 
     def _makeMillReadme(self, outdir: Path, panel: pcbnew.BOARD) -> None:
