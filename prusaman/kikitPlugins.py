@@ -80,7 +80,10 @@ class Framing(FramingPlugin):
 
 class Text(TextVariablePlugin):
     def variables(self) -> Dict[str, Any]:
-        project = PrusamanProject(os.environ["PRUSAMAN_SOURCE_PROJECT"])
+        try:
+            project = PrusamanProject(os.environ["PRUSAMAN_SOURCE_PROJECT"])
+        except KeyError:
+            raise RuntimeError("Env variable PRUSAMAN_SOURCE_PROJECT not set") from None
         return {
             "boardId": project.textVars["ID"],
             "boardRevision": Formatter(lambda: project.board.GetTitleBlock().GetRevision())
