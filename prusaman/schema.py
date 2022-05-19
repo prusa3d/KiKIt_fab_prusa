@@ -14,14 +14,19 @@ def isElement(name: str) -> callable[[AstNode], bool]:
         return isinstance(item, Atom) and item.value == name
     return f
 
-def readDict(items: Iterable[SExpr]) -> Dict[str, str]:
+def readTitleBlock(items: Iterable[SExpr]) -> Dict[str, str]:
     vals = {}
     for item in items:
-        assert len(item.items) == 2
-        key = item.items[0]
-        value = item.items[1]
-        assert isinstance(key, Atom) and isinstance(value, Atom)
-        vals[key.value] = value.value
+        assert all(isinstance(x, Atom) for x in item.items)
+        if isElement("comment")(item):
+            key = item.items[0].value
+            seq = item.items[1].value
+            value = item.items[2].value
+            vals[f"{key}{seq}"] = value
+        else:
+            key = item.items[0].value
+            value = item.items[1].value
+            vals[key] = value
     return vals
 
 @dataclass
@@ -39,7 +44,7 @@ class Schema:
             if isElement("paper")(item):
                 paper = item.items[1].value
             if isElement("title_block")(item):
-                titleBlock = readDict(item.items[1:])
+                titleBlock = readTitleBlock(item.items[1:])
         return Schema(
             paper=paper,
             titleBlock=titleBlock)

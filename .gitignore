@@ -5,6 +5,7 @@ __pycache__
 # Ignore dev kicad files
 *-backups
 fp-info-cache
+_autosave*
 
 # Ignore IDEs/editors
 .vscode
@@ -24,3 +25,5 @@ venv
 testproject
 
 .envrc
+
+testbank
