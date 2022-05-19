@@ -508,16 +508,26 @@ class Manugenerator:
 
     def _makeKikitPanel(self, output: Path) -> None:
         self._reportInfo("KIKIT", "Starting panel")
-        from kikit import panelize_ui_impl as ki  # type: ignore
-        from kikit.panelize_ui import doPanelization  # type: ignore
+        # from kikit import panelize_ui_impl as ki  # type: ignore
+        # from kikit.panelize_ui import doPanelization  # type: ignore
 
         cfgFile = self._project.getDir() / "kikit.json"
-
-        os.environ["PRUSAMAN_SOURCE_PROJECT"] = str(self._project.getDir())
-
+        env = os.environ
+        env["PRUSAMAN_SOURCE_PROJECT"] = str(self._project.getDir())
         input = self._project.getBoard()
-        preset = ki.obtainPreset([str(cfgFile)])
-        doPanelization(str(input), str(output), preset)
+
+        command = [locatePythonInterpreter(), "-m", "kikit.ui", "panelize",
+                        "-p", str(cfgFile),
+                        str(input), str(output)]
+
+        r = subprocess.run(command, encoding="utf-8",
+            capture_output=True, cwd=self._project.getDir(), env=env, check=True)
+        if r.returncode != 0:
+            raise RuntimeError(f"Cannot make KiKit panel ({r.returncode}):\n{r.stdout}\n{r.stderr}")
+        if len(r.stdout) != 0:
+            self._reportInfo("KIKIT", r.stdout)
+        if len(r.stderr) != 0:
+            self._reportWarning("KIKIT", r.stderr)
         self._reportInfo("KIKIT", "Panel finished")
 
 
