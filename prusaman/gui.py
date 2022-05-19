@@ -1,3 +1,4 @@
+import shutil
 import pcbnew
 import wx
 import textwrap
@@ -80,44 +81,53 @@ class PrusamanExport(PrusamanExportBase):
             reportException(e, traceback.format_exc())
 
     def doExportWork(self, outDir, project):
+        # We use temporary directory so we do not damage any existing files in
+        # process. Once we are done, we atomically swap the directories
+        tmpdir = Path(outDir).resolve()
+        faileddir = tmpdir.parent / (tmpdir.name + "-failed")
+        tmpdir = tmpdir.parent / (tmpdir.name + "-temp")
+
+        shutil.rmtree(faileddir, ignore_errors=True)
+        shutil.rmtree(tmpdir, ignore_errors=True)
         try:
             exception = None
-            with TemporaryDirectory(prefix="prusaman_") as tmpdir:
-                def work():
-                    nonlocal exception
-                    try:
-                        generator = Manugenerator(project, tmpdir,
-                                        reportInfo=self.onInfo,
-                                        reportWarning=self.onWarning,
-                                        askContinuation=self.onPrompt)
-                        generator.make()
-                    except Exception as e:
-                        exception = e
-                self.onInfo("", "Starting export")
-                t = Thread(target=work)
-                t.start()
-                while True:
-                    wx.CallAfter(lambda: self.outputProgressbar.Pulse())
-                    t.join(0.1)
-                    if not t.is_alive():
-                        break
-                if exception is not None:
-                    raise exception
+            def work():
+                nonlocal exception
+                try:
+                    generator = Manugenerator(project, tmpdir,
+                                    reportInfo=self.onInfo,
+                                    reportWarning=self.onWarning,
+                                    askContinuation=self.onPrompt)
+                    generator.make()
+                except Exception as e:
+                    exception = e
+            self.onInfo("", "Starting export")
+            t = Thread(target=work)
+            t.start()
+            while True:
+                wx.CallAfter(lambda: self.outputProgressbar.Pulse())
+                t.join(0.1)
+                if not t.is_alive():
+                    break
+            if exception is not None:
+                raise exception
 
-                if self.werrorCheckbox.GetValue() and self.triggered:
-                    raise RuntimeError("Warnings were treated as errors.\nSee warnings in the output box.")
+            if self.werrorCheckbox.GetValue() and self.triggered:
+                raise RuntimeError("Warnings were treated as errors.\nSee warnings in the output box.")
 
-                Path(outDir).mkdir(parents=True, exist_ok=True)
-                replaceDirectory(outDir, tmpdir)
-                self.onInfo("", "Finished, all files were successfully generated.")
+            Path(outDir).mkdir(parents=True, exist_ok=True)
+            replaceDirectory(outDir, tmpdir)
+            self.onInfo("", "Finished, all files were successfully generated.")
 
             wx.CallAfter(lambda: self.outputProgressbar.SetValue(self.outputProgressbar.GetRange()))
             wx.CallAfter(lambda: self.onFinish(outDir))
         except Exception as e:
-            self.onError("", f"Error occured: {e}")
+            replaceDirectory(faileddir, tmpdir)
+            self.onError("", f"Error occured: {e}\n\nBuild artifacts are stored in {faileddir}")
             reportException(e, traceback.format_exc())
             wx.CallAfter(lambda: self.outputProgressbar.SetValue(0))
         finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
             wx.CallAfter(lambda: self.exportButton.SetLabelText(self.oldLabel))
             wx.CallAfter(lambda: self.exportButton.Enable())
 

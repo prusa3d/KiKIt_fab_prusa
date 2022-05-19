@@ -36,6 +36,11 @@ def stdioPrompt(tag: str, message: str) -> None:
     return r.lower() == "y"
 
 def replaceDirectory(target: Union[Path, str], source: Union[Path, str]) -> None:
+    try:
+        os.replace(source, target)
+        return
+    except Exception:
+        pass
     shutil.rmtree(target)
     shutil.move(source, target)
 
@@ -435,8 +440,8 @@ class Manugenerator:
                 f.GetValue(),
                 fpid.GetUniStringLibItemName(),
                 pcbnew.ToMM(pos[0]),
-                pcbnew.ToMM(pos[1]),
-                f.GetOrientation() / 10,
+                -pcbnew.ToMM(pos[1]),
+                ((f.GetOrientation() + 1800) % 3600) / 10,
                 layerToSide(f.GetLayer())
             ])
 
@@ -508,8 +513,6 @@ class Manugenerator:
 
     def _makeKikitPanel(self, output: Path) -> None:
         self._reportInfo("KIKIT", "Starting panel")
-        # from kikit import panelize_ui_impl as ki  # type: ignore
-        # from kikit.panelize_ui import doPanelization  # type: ignore
 
         cfgFile = self._project.getDir() / "kikit.json"
         env = os.environ

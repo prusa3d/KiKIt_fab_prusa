@@ -1,3 +1,4 @@
+import shutil
 from typing import Optional
 import click
 import sys
@@ -62,6 +63,15 @@ def make(source, outputdir, force, werror, silent, question, debug):
 
     app = fakeKiCADGui()
 
+    # We use temporary directory so we do not damage any existing files in
+    # process. Once we are done, we atomically swap the directories
+    tmpdir = Path(outputdir).resolve()
+    faileddir = tmpdir.parent / (tmpdir.name + "-failed")
+    tmpdir = tmpdir.parent / (tmpdir.name + "-temp")
+
+    shutil.rmtree(faileddir, ignore_errors=True)
+    shutil.rmtree(tmpdir, ignore_errors=True)
+
     try:
         project = PrusamanProject(source)
 
@@ -80,25 +90,25 @@ def make(source, outputdir, force, werror, silent, question, debug):
             reportInfo=(not silent),
             defaultAnswer=defaultAnswer)
 
-        # We use temporary directory so we do not damage any existing files in
-        # process. Once we are done, we atomically swap the directories
-        with TemporaryDirectory(prefix="prusaman_") as tmpdir:
-            generator = Manugenerator(project, tmpdir,
-                            reportInfo=reporter.info,
-                            reportWarning=reporter.warning,
-                            askContinuation=reporter.prompt)
-            generator.make()
+        generator = Manugenerator(project, tmpdir,
+                        reportInfo=reporter.info,
+                        reportWarning=reporter.warning,
+                        askContinuation=reporter.prompt)
+        generator.make()
 
-            if werror and reporter.triggered:
-                raise RuntimeError("Warnings were treated as errors. See warnings above.")
+        if werror and reporter.triggered:
+            raise RuntimeError("Warnings were treated as errors. See warnings above.")
 
-            Path(outputdir).mkdir(parents=True, exist_ok=True)
-            replaceDirectory(outputdir, tmpdir)
+        Path(outputdir).mkdir(parents=True, exist_ok=True)
+        replaceDirectory(outputdir, tmpdir)
     except Exception as e:
         sys.stderr.write(f"Error occurred: \n{textwrap.indent(str(e), '   ')}\n")
-        sys.stderr.write("\nNo output files produced\n")
+        sys.stderr.write(f"\nNo output files produced. The build artifacts are in {faileddir}\n")
+        replaceDirectory(faileddir, tmpdir)
         if debug:
             raise e
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
 
 
 @click.command()
