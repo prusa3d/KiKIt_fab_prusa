@@ -529,7 +529,7 @@ class Manugenerator:
         if len(r.stderr) != 0:
             self._reportWarning("KIKIT", r.stderr)
         if r.returncode != 0:
-            raise RuntimeError(f"Cannot make KiKit panel. See log for further details.")
+            raise RuntimeError(f"Cannot make KiKit panel. Error code {r.returncode}. See log for further details.")
         self._reportInfo("KIKIT", "Panel finished")
 
 

@@ -48,7 +48,7 @@ class Framing(FramingPlugin):
 
     def buildDummyFramingSubstrates(self, substrates: Iterable[Substrate]) -> Iterable[Substrate]:
         # We follow exactly what KiKit does:
-        vSpace, hSpace = 3 * mm, 3 * mm
+        vSpace, hSpace = 2 * mm, 2 * mm
         dummy = []
         minx, miny, maxx, maxy = substrates[0].bounds()
         for s in substrates:

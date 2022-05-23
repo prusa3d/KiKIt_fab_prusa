@@ -30,6 +30,7 @@ def makeGerbers(source: Union[Path, BOARD], outdir: Path,
     popt.SetUseGerberX2format(False)
     popt.SetSubtractMaskFromSilk(True)
     popt.SetSkipPlotNPTH_Pads(False)
+    popt.SetDisableGerberMacros(True)
 
     try:
         for layer in layers(board):
