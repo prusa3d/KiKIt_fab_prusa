@@ -1,6 +1,6 @@
 import os
 from pcbnew import wxPointMM, FootprintLoad, UTF8, ToMM
-from typing import Any, Dict, Iterable
+from typing import Any, Dict, Iterable, Tuple
 from kikit.plugin import FramingPlugin, ToolingPlugin, TextVariablePlugin
 from kikit.text import Formatter
 from kikit.panelize import Panel
@@ -30,8 +30,15 @@ class Tooling(ToolingPlugin):
         addPrusaFp(panel, "hole4cutter-1,5mm", bottomLeft + wxPointMM(2.5, -2.5))
 
 class Framing(FramingPlugin):
+    def _spacing(self) -> Tuple[int, int]:
+        layout = self.preset["layout"]
+        if layout["type"] != "grid":
+            raise RuntimeError("Prusaman framing plugin supports only grid pattern.")
+        return layout["vspace"], layout["hspace"]
+
     def buildFraming(self, panel: Panel) -> Iterable[LineString]:
-        panel.makeTightFrame(5 * mm, 2 * mm, 2 * mm, 2 * mm)
+        vSpace, hSpace = self._spacing()
+        panel.makeTightFrame(5 * mm, 2 * mm, vSpace, hSpace)
         panel.boardSubstrate.removeIslands()
 
         height = readLength(self.userArg)
@@ -48,7 +55,7 @@ class Framing(FramingPlugin):
 
     def buildDummyFramingSubstrates(self, substrates: Iterable[Substrate]) -> Iterable[Substrate]:
         # We follow exactly what KiKit does:
-        vSpace, hSpace = 2 * mm, 2 * mm
+        vSpace, hSpace = self._spacing()
         dummy = []
         minx, miny, maxx, maxy = substrates[0].bounds()
         for s in substrates:
