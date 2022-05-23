@@ -31,7 +31,7 @@ class Tooling(ToolingPlugin):
 
 class Framing(FramingPlugin):
     def buildFraming(self, panel: Panel) -> Iterable[LineString]:
-        panel.makeTightFrame(5 * mm, 3 * mm, 3 * mm, 3 * mm)
+        panel.makeTightFrame(5 * mm, 2 * mm, 2 * mm, 2 * mm)
         panel.boardSubstrate.removeIslands()
 
         height = readLength(self.userArg)
