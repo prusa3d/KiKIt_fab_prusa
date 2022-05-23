@@ -321,8 +321,6 @@ class Manugenerator:
 
         with open(posName, "w", newline="") as posFile:
             self._makeSmtPosFile(posFile, bom, self._project.getBoard())
-        with open(bomName, "w", newline="") as bomFile:
-            self._makeSmtBomFile(bomFile, bom)
 
         zipFiles(zipName, outdir,
             glob.glob(str(outdir / "*.txt")) +

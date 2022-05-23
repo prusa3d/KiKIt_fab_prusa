@@ -43,7 +43,8 @@ class PnBFilter(BomFilter):
     """
     def assemblyFilter(self, symbol: Symbol) -> bool:
         pnb = self._getPnbField(symbol)
-        return self._commonFilter(symbol) and pnb == ""
+        return getReference(symbol).startswith("FID") or \
+               (self._commonFilter(symbol) and pnb == "")
 
 
     def sourcingFilter(self, symbol: Symbol) -> bool:
