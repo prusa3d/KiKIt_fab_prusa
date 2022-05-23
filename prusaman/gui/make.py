@@ -10,29 +10,13 @@ import traceback
 import sys
 import subprocess
 
-from .params import RESOURCES
-from .dialogs.prusamanExport import PrusamanExportBase, ErrorDialogBase
-from .project import PrusamanProject
-from .manugenerator import Manugenerator, replaceDirectory
-from .util import locatePythonInterpreter
-from .wxAnyThread import anythread
-
-class ErrorDialog(ErrorDialogBase):
-    def __init__(self, error, details, parent=None, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
-        self.errorMessage.SetLabelText(f"Error: {error}")
-        self.errorDetails.SetValue(details)
-        self.SetMinSize(wx.Size(450, -1))
-        self.Fit()
-
-    def handleOk(self, event):
-        super().handleOk(event)
-        self.Close()
-
-    def handleExpansion(self, event):
-        super().handleExpansion(event)
-        self.SetMinSize(wx.Size(450, -1))
-
+from .common import reportException
+from ..params import RESOURCES
+from ..dialogs.prusamanExport import PrusamanExportBase
+from ..project import PrusamanProject
+from ..manugenerator import Manugenerator, replaceDirectory
+from ..util import locatePythonInterpreter
+from ..wxAnyThread import anythread
 
 class PrusamanExport(PrusamanExportBase):
     def __init__(self, projectPath, *args, **kwargs):
@@ -212,13 +196,6 @@ class ExportPlugin(pcbnew.ActionPlugin):
         else:
             if self.exception:
                 reportException(self.exception, self.traceback)
-
-
-def registerPlugins():
-    ExportPlugin().register()
-
-def reportException(e, details):
-    wx.CallAfter(lambda: ErrorDialog(e, details).ShowModal())
 
 def runExport(path):
     app = wx.App()

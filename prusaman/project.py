@@ -16,6 +16,9 @@ class PrusamanProject:
         if str(path).endswith(".kicad_pro"):
             name = self._projectdir.name[:-len(".kicad_pro")]
             self._projectdir = self._projectdir.parent
+        elif str(path).endswith(".kicad_pcb"):
+            name = self._projectdir.name[:-len(".kicad_pcb")]
+            self._projectdir = self._projectdir.parent
         else:
             if not self._projectdir.is_dir():
                 raise RuntimeError(f"The project directory {self._projectdir} is not a directory")

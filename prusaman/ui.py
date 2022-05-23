@@ -3,10 +3,12 @@ from typing import Optional
 import click
 import sys
 import textwrap
+
+from prusaman.sync3d import synchronize3D
 from . import __version__
 from .manugenerator import Manugenerator, PrusamanProject, replaceDirectory, stdioPrompt
-from tempfile import TemporaryDirectory
 from pathlib import Path
+import pcbnew
 
 class StdReporter:
     def __init__(self, reportWarnings: bool, reportInfo: bool,
@@ -113,12 +115,14 @@ def make(source, outputdir, force, werror, silent, question, debug):
 
 @click.command()
 @click.argument("source", type=click.Path(file_okay=True, dir_okay=True, exists=True))
-@click.argument("outputdir", type=click.Path(file_okay=False, dir_okay=True))
-def bump():
+def sync3d(source):
     """
-    Bump project (SOURCE) version and place the new version into OUTPUTDIR
+    Synchronize the visibility of 3D models in given project.
     """
-    raise NotImplementedError("This functionality is not implemented yet.")
+    project = PrusamanProject(source)
+    board = pcbnew.LoadBoard(str(project.getBoard()))
+    synchronize3D(board)
+    board.Save(project.getBoard())
 
 
 @click.group()
@@ -130,7 +134,7 @@ def cli():
     pass
 
 cli.add_command(make)
-cli.add_command(bump)
+cli.add_command(sync3d)
 
 if __name__ == "__main__":
     cli()

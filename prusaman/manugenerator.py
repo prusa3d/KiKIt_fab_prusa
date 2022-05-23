@@ -307,7 +307,6 @@ class Manugenerator:
         outdir.mkdir(parents=True, exist_ok=True)
 
         posName = outdir / (self._project.getName() + "-all-pos.csv")
-        bomName = outdir / (self._project.getName() + "-BOM-SMT.csv")
         zipName = outdir / (self._project.getName() + "-BOM-SMT.zip")
 
         self._makesmtStageDxf(outdir)
