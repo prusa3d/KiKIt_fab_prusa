@@ -221,6 +221,10 @@ class Manugenerator:
         self._makeSmtStage()
         self._makeSourcingStage()
 
+        finalArchive = self._outputdir / (self._project.getName() + ".zip")
+        zipFiles(finalArchive, self._outputdir,
+            [x for x in glob.glob(str(self._outputdir / "**" / "*")) if os.path.isfile(x)])
+
     def _makeValidation(self) -> None:
         sch = self._project.schema
         board = self._project.board

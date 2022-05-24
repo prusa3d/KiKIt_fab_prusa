@@ -1,4 +1,4 @@
-from zipfile import ZipFile
+from zipfile import ZipFile, ZIP_DEFLATED
 from pathlib import Path
 import shutil
 import os
@@ -17,7 +17,7 @@ def zipFiles(archivePath: StrPath, basePath: StrPath, files: List[StrPath]) -> N
     archive
     """
     assert os.path.realpath(archivePath) not in [os.path.realpath(f) for f in files]
-    with ZipFile(archivePath, "w") as zipF:
+    with ZipFile(archivePath, "w", compression=ZIP_DEFLATED, compresslevel=9) as zipF:
         for fileName in files:
             relativeName = os.path.relpath(str(fileName), str(basePath))
             with open(fileName, "rb") as src, zipF.open(str(relativeName), "w") as dst:
