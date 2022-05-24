@@ -182,7 +182,7 @@ class ExportPlugin(pcbnew.ActionPlugin):
             # Due to problems in KiCAD leading to segfault, we have to run export in
             # a separate process.
             command = [locatePythonInterpreter(), "-c",
-                f"from prusaman.gui import runExport; runExport('{projectPath.as_posix()}');"]
+                f"from prusaman.gui.make import runExport; runExport('{projectPath.as_posix()}');"]
             p = subprocess.run(command, capture_output=True, encoding="utf-8")
             if p.returncode != 0:
                 raise RuntimeError(f"Cannot run Prusaman dialog in a new process: {p.stdout}\n{p.stderr}")
