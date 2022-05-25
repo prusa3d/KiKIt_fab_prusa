@@ -1,18 +1,8 @@
 from __future__ import annotations
 from typing import Dict, Iterable, Union
-from kikit.sexpr import SExpr, Atom, parseSexprF
+from kikit.sexpr import SExpr, Atom, parseSexprF, isElement
 from dataclasses import dataclass
 from pathlib import Path
-
-AstNode = Union[SExpr, Atom]
-
-def isElement(name: str) -> callable[[AstNode], bool]:
-    def f(node: AstNode) -> bool:
-        if isinstance(node, Atom) or len(node) == 0:
-            return False
-        item = node[0]
-        return isinstance(item, Atom) and item.value == name
-    return f
 
 def readTitleBlock(items: Iterable[SExpr]) -> Dict[str, str]:
     vals = {}

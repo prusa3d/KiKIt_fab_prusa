@@ -4,6 +4,7 @@ from .pcbnew_common import findBoardBoundingBox
 from .params import RESOURCES
 from datetime import datetime
 from kikit.text import Formatter
+from kikit.sexpr import findNode, readStrDict, parseSexprF, isElement
 
 def formatBoardSize(board: Optional[pcbnew.BOARD]) -> str:
     if board is None:
@@ -33,6 +34,36 @@ def formatDatamatrixInfo(board: Optional[pcbnew.BOARD], boardId: Union[str, int,
         message += f"    - \"{d.GetReference()}\", {pcbnew.ToMM(d.GetPosition()[0])}, {pcbnew.ToMM(-d.GetPosition()[1])}, {d.GetOrientation() // 10}, {dmcLayername(d.GetLayer())}\n"
     return message
 
+def formatStackup(board: Optional[pcbnew.BOARD]) -> str:
+    if board is None:
+        raise RuntimeError("Cannot use stackup in template without board context")
+    with open(board.GetFileName()) as f:
+        bAst = parseSexprF(f, 20) # We use limit to speed up the parsing
+    setup = findNode(bAst.items, "setup")
+    if setup is None:
+        raise RuntimeError("The board doesn't contain stackup information")
+    stackup = findNode(setup.items, "stackup")
+    if stackup is None:
+        raise RuntimeError("The board doesn't contain stackup information")
+    layersText = []
+    for layerInfo in stackup.items[1:]:
+        if not isElement("layer")(layerInfo):
+            continue
+        kicadLayerName = layerInfo.items[1].value
+        if kicadLayerName in ["F.Paste", "B.Paste"]:
+            continue
+
+        properties = readStrDict(layerInfo.items[2:])
+        paramTexts = [f"{k}: {v}" for k, v in properties.items() if k != "type"]
+
+        text = properties["type"]
+        if len(paramTexts) > 0:
+            text += " (" + ", ".join(paramTexts) + ")"
+        if not kicadLayerName.startswith("dielectric"):
+            text += f" represented by layer {kicadLayerName}"
+        layersText.append(text)
+    return "\n".join([f"- {x}" for x in layersText])
+
 def populateText(template: str, board: Optional[pcbnew.BOARD]=None,
                  boardId: Union[str, int, None]=None) -> str:
     """
@@ -45,7 +76,8 @@ def populateText(template: str, board: Optional[pcbnew.BOARD]=None,
         "boardTitle": Formatter(lambda: board.GetTitleBlock().GetTitle()),
         "boardDate": Formatter(lambda: board.GetTitleBlock().GetDate()),
         "boardRevision": Formatter(lambda: board.GetTitleBlock().GetRevision()),
-        "boardCompany": Formatter(lambda: board.GetTitleBlock().GetCompany())
+        "boardCompany": Formatter(lambda: board.GetTitleBlock().GetCompany()),
+        "stackup": Formatter(lambda: formatStackup(board))
     }
 
     for i in range(10):

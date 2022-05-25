@@ -14,5 +14,7 @@ PCB Specifications:
 DMC Specifications:
 {dmc}
 
+Stackup:
+{stackup}
 
 

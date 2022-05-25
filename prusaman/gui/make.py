@@ -115,7 +115,7 @@ class PrusamanExport(PrusamanExportBase):
             wx.CallAfter(lambda: self.exportButton.Enable())
 
     def onWarning(self, tag, message):
-        self.triggered = True
+        self.triggered = self.triggered or len(message) > 0
         self.addMessage("Warning", tag, message)
 
     def onInfo(self, tag, message):
