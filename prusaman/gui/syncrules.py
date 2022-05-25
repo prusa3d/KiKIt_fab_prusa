@@ -35,6 +35,5 @@ class SyncDesignRulesPlugin(pcbnew.ActionPlugin):
                 return
             d = board.GetDesignSettings()
             designRules.applyTo(d)
-            board.GetDesignSettings().CloneFrom(d)
         except Exception as e:
             reportException(e, traceback.format_exc())
