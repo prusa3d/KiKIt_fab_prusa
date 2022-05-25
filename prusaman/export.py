@@ -31,6 +31,7 @@ def makeGerbers(source: Union[Path, BOARD], outdir: Path,
     popt.SetSubtractMaskFromSilk(True)
     popt.SetSkipPlotNPTH_Pads(False)
     popt.SetDisableGerberMacros(True)
+    popt.SetDrillMarksType(0) # NO_DRILL_SHAPE
 
     try:
         for layer in layers(board):

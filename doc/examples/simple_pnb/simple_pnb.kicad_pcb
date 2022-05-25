@@ -82,7 +82,7 @@
   )
 
   (property "ID" "42")
-  (property "TECHNOLOGY_PARAMSS" "default")
+  (property "TECHNOLOGY_PARAMS" "default")
 
   (net 0 "")
   (net 1 "Net-(D1-Pad1)")

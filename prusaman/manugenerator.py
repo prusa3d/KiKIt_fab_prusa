@@ -14,6 +14,8 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, Uni
 
 import pcbnew # type: ignore
 
+from kikit.drc import runBoardDrc, readBoardDrcExclusions
+
 from prusaman.bom import BomFilter, LegacyFilter, PnBFilter
 from prusaman.drc import DesignRules
 from prusaman.netlist import exportIBomNetlist
@@ -236,6 +238,7 @@ class Manugenerator:
         self._validateProjectVars()
         self._validateTitleBlock(sch, board)
         self._validateDesignRules()
+        self._ensurePassingDrc(board, "source board")
         self._reportInfo("VALIDATE", "Validation of the board finished")
 
     def _validateTitleBlock(self, schema: Schema, board: pcbnew.BOARD) -> None:
@@ -260,6 +263,7 @@ class Manugenerator:
             self._askWarning("TECHNOLOGY",
                 "Missing TECHNOLOGY_PARAMS in project variables. Ignore and continue?",
                 "Missing TECHNOLOGY_PARAMS in project variables.")
+            self._reportWarning("TECHNOLOGY", "TECHNOLOGY_PARAMS is not set, no rules are enforced.")
 
     def _validateDesignRules(self) -> None:
         # This is temporary before we migrate all projects
@@ -275,6 +279,33 @@ class Manugenerator:
             self._reportWarning("DRC", f"Wrong board setting {name}. " + \
                 f"{DesignRules.writeValue(left)} expected, got {DesignRules.writeValue(right)}")
         raise RuntimeError("Invalid board design rules, see log for details")
+
+    def _ensurePassingDrc(self, board: pcbnew.BOARD, name) -> None:
+        self._reportInfo("DRC", f"Running DRC for {name}")
+        report = runBoardDrc(board, True)
+        report.pruneExclusions(readBoardDrcExclusions(board))
+
+        if len(report.drc):
+            self._reportWarning("DRC", f"There are {len(report.drc)} DRC violations:")
+        for v in report.drc:
+            self._reportWarning("DRC", f"{name}: {v.format(pcbnew.EDA_UNITS_MILLIMETRES)}")
+
+        if len(report.unconnected):
+            self._reportWarning("DRC", f"There are {len(report.unconnected)} unconnected items:")
+        for v in report.unconnected:
+            self._reportWarning("DRC", f"{name}: {v.format(pcbnew.EDA_UNITS_MILLIMETRES)}")
+
+        if len(report.footprint):
+            self._reportWarning("DRC", f"There are {len(report.drc)} footprint violations:")
+        for v in report.footprint:
+            self._reportWarning("DRC", f"{name}: {v.format(pcbnew.EDA_UNITS_MILLIMETRES)}")
+
+        errorCount = len(report.drc) + len(report.unconnected) + len(report.footprint)
+        if errorCount > 0:
+            self._askWarning("DRC",
+                            f"There are DRC errors in {name}. See the log. Ignore them and continue?",
+                            f"There are DRC errors in {name}. See the log.")
+        self._reportInfo("DRC", f"Running DRC for {name} finished")
 
 
     def _makePanelStage(self) -> None:
@@ -295,7 +326,10 @@ class Manugenerator:
             raise RuntimeError("No recipe to make panel. " + \
                 "You miss one of kikit.json, panel.sh or panel/panel.kicad_pcb in the project.")
 
-        makeGerbers(source=outfile, outdir=gerberdir, layers=collectStandardLayers)
+        panel = pcbnew.LoadBoard(str(outfile))
+        self._ensurePassingDrc(panel, "generated panel")
+
+        makeGerbers(source=panel, outdir=gerberdir, layers=collectStandardLayers)
         self._makeIbom(source=self._project.getBoard(), outdir=outdir)
         shutil.copyfile(RESOURCES / "datamatrix_znaceni_zbozi_v2.pdf",
                         outdir / "datamatrix_znaceni_zbozi_v2.pdf")

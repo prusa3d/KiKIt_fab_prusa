@@ -40,6 +40,7 @@ class PrusamanExportBase ( wx.Dialog ):
 		gridSizer.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
 		self.werrorCheckbox = wx.CheckBox( self, wx.ID_ANY, u"Treat warnings as errors", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.werrorCheckbox.SetValue(True)
 		gridSizer.Add( self.werrorCheckbox, 0, wx.ALL|wx.EXPAND, 5 )
 
 
