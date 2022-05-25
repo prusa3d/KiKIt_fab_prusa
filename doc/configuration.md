@@ -1,6 +1,14 @@
 # Nastavení projektu
 
-KiCAD projekt musí obsahovat textovou proměnnou `ID`, což je ID DMC. Dále jak schéma, tak i deska musí obsahovat shodné nastavení revize. Ukázkové projekty jsou k nalezení v adresáři [examples](examples).
+- KiCAD projekt musí obsahovat textovou proměnnou `ID`, což je ID DMC.
+- KiCAD project musí obsahovat textovou proměnnou `TECHNOLOGY_PARAMS`, která
+  specifikuje název sady designových pravidel. Dostupná pravidla jsou k nalazení
+  ve složce [designRules](../prusaman/resources/designRules/). Uvádí se bez
+  přípony `.json`.
+- Jak schéma, tak i deska musí obsahovat shodné nastavení revize.
+
+Ukázkové projekty jsou k nalezení v adresáři [examples](examples).
+
 
 ## Filtrování BOMu
 
@@ -36,7 +44,7 @@ Panel je možné specifikovat pomocí jednoho ze třech nástrojů:
 
 K dispozici je [příklad](examples/simple_pnb/kikit.json).
 
-# Šablony a argumenty
+## Šablony a argumenty
 
 V momentě, kdy specifikujete výrobní proces, existují nějaké neznámé (např.
 rozměry panelu, datum generování apod.) Pro tyto účely je možné používat
@@ -50,3 +58,9 @@ Podporovány jsou následující proměnné:
 
 a zároveň všechny proměnné, které podporuje KiKit
 ([dokumentace](https://github.com/yaqwsx/KiKit/blob/master/doc/panelizeCli.md#available-variables-in-text))
+
+## Tvorba technologický parametrů (pravidel návrhu)
+
+Stačí do repozitáře přidat nový JSON soubor s pravidly. Pravidla se nachází v
+adresáři [designRules](../prusaman/resources/designRules/). Poté je třeba vydat
+novou verzi Prusamana.

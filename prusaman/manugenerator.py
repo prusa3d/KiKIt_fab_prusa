@@ -15,6 +15,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, Uni
 import pcbnew # type: ignore
 
 from prusaman.bom import BomFilter, LegacyFilter, PnBFilter
+from prusaman.drc import DesignRules
 from prusaman.netlist import exportIBomNetlist
 from prusaman.schema import Schema
 
@@ -36,12 +37,14 @@ def stdioPrompt(tag: str, message: str) -> None:
     return r.lower() == "y"
 
 def replaceDirectory(target: Union[Path, str], source: Union[Path, str]) -> None:
+    if not os.path.exists(source):
+        return
     try:
         os.replace(source, target)
         return
     except Exception:
         pass
-    shutil.rmtree(target)
+    shutil.rmtree(target, ignore_errors=True)
     shutil.move(source, target)
 
 from kikit.eeschema_v6 import Symbol, extractComponents, getField, getReference # type: ignore
@@ -226,11 +229,14 @@ class Manugenerator:
             [x for x in glob.glob(str(self._outputdir / "**" / "*")) if os.path.isfile(x)])
 
     def _makeValidation(self) -> None:
+        self._reportInfo("VALIDATE", "Validation of the board started")
         sch = self._project.schema
         board = self._project.board
 
         self._validateProjectVars()
         self._validateTitleBlock(sch, board)
+        self._validateDesignRules()
+        self._reportInfo("VALIDATE", "Validation of the board finished")
 
     def _validateTitleBlock(self, schema: Schema, board: pcbnew.BOARD) -> None:
         schBlock = schema.titleBlock
@@ -250,6 +256,26 @@ class Manugenerator:
     def _validateProjectVars(self) -> None:
         if "ID" not in self._project.textVars:
             raise RuntimeError("The project has not ID specified")
+        if "TECHNOLOGY_PARAMS" not in self._project.textVars:
+            self._askWarning("TECHNOLOGY",
+                "Missing TECHNOLOGY_PARAMS in project variables. Ignore and continue?",
+                "Missing TECHNOLOGY_PARAMS in project variables.")
+
+    def _validateDesignRules(self) -> None:
+        # This is temporary before we migrate all projects
+        if "TECHNOLOGY_PARAMS" not in self._project.textVars:
+            return
+        paramsName = self._project.textVars["TECHNOLOGY_PARAMS"]
+        designRules = DesignRules.fromName(paramsName)
+        board = self._project.board
+        violations = designRules.settingsViolations(board.GetDesignSettings())
+        if len(violations) == 0:
+            return
+        for name, (left, right) in violations.items():
+            self._reportWarning("DRC", f"Wrong board setting {name}. " + \
+                f"{DesignRules.writeValue(left)} expected, got {DesignRules.writeValue(right)}")
+        raise RuntimeError("Invalid board design rules, see log for details")
+
 
     def _makePanelStage(self) -> None:
         panelName = self._fileName("PANEL")

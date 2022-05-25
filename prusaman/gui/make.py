@@ -4,7 +4,6 @@ import wx
 import textwrap
 import prusaman
 from pathlib import Path
-from tempfile import TemporaryDirectory
 from threading import Thread
 import traceback
 import sys
