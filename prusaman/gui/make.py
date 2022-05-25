@@ -116,30 +116,36 @@ class PrusamanExport(PrusamanExportBase):
 
     def onWarning(self, tag, message):
         self.triggered = self.triggered or len(message) > 0
-        self.addMessage("Warning", tag, message)
+        headerAttr = wx.TextAttr(wx.Colour(0, 0, 0), wx.Colour(249, 115, 22))
+        self.addMessage("Warning", tag, message, headerAttr)
 
     def onInfo(self, tag, message):
-        self.addMessage("Info", tag, message)
+        headerAttr = wx.TextAttr(wx.Colour(0, 0, 0))
+        self.addMessage("Info", tag, message, headerAttr)
 
     def onError(self, tag, message):
-        self.addMessage("Error", tag, message)
+        headerAttr = wx.TextAttr(wx.Colour(0, 0, 0), wx.Colour(220, 38, 38))
+        self.addMessage("Error", tag, message, headerAttr)
 
     @anythread
     def onPrompt(self, tag, message):
         answer = wx.MessageBox(message, tag, wx.ICON_QUESTION | wx.YES_NO)
         return answer == wx.YES
 
-    def addMessage(self, header, tag, message):
+    @anythread
+    def addMessage(self, header, tag, message, headerStyle):
         if len(message) == 0:
             return
         BODY = 80
         wMessages = textwrap.wrap(message, BODY)
         head, *tail = wMessages
-        wx.CallAfter(lambda:
-            self.outputText.write(f"{header + ' ' + tag + ': ':>20}{head}\n"))
+
+        currentPos = len(self.outputText.GetValue())
+        intro = f"{header} {tag}".strip()
+        self.outputText.write(f"{intro + ':':>19} {head}\n")
         if len(tail) > 0:
-            wx.CallAfter(lambda:
-                self.outputText.write(textwrap.indent("\n".join(tail), 20 * " ") + "\n"))
+            self.outputText.write(textwrap.indent("\n".join(tail), 20 * " ") + "\n")
+        self.outputText.SetStyle(currentPos, currentPos + 19, headerStyle)
 
     def onFinish(self, outdir):
         answer = wx.MessageBox(
