@@ -55,6 +55,10 @@ Podporovány jsou následující proměnné:
 - `size` – velikost desky k níž se panel vztahuje
 - `dmc` – informace o datamatrixu symbolech (poloha + popisek)
 - `date` – dnešní datum
+- `stackup` - stackup desky
+- `minDrill` - nejmenší velikost díry dle návrhových pravidel
+- `minSpace` - nejmenší rozteč dvou drah dle návrhových pravidel
+- `minTrace` - nejmenší šířka dráhy dle návrhových pravidel
 
 a zároveň všechny proměnné, které podporuje KiKit
 ([dokumentace](https://github.com/yaqwsx/KiKit/blob/master/doc/panelizeCli.md#available-variables-in-text))

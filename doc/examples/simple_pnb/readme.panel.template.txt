@@ -6,8 +6,8 @@ PCB Specifications:
 - semi-matte black mask
 - Orange silkscreen, specifications in different models below
 - cooper 1 oz
-- Minimum guide width / 0.2 mm gaps
-- minimal drilling of 0.3 mm - hole diameters are trailing - surface treatment immersive gold
+- Minimum trace width {minTrace} / {minSpace} gaps
+- minimal drilling of {minDrill} - hole diameters are trailing - surface treatment immersive gold
 
 - we accept max 5% "X boards" on panel
 

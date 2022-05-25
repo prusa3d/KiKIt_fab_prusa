@@ -64,6 +64,24 @@ def formatStackup(board: Optional[pcbnew.BOARD]) -> str:
         layersText.append(text)
     return "\n".join([f"- {x}" for x in layersText])
 
+def formatMinimalDrilling(board: Optional[pcbnew.BOARD]) -> str:
+    if board is None:
+        raise RuntimeError("Cannot use minDrill in template without board context")
+    mDrill = board.GetDesignSettings().m_MinThroughDrill
+    return f"{pcbnew.ToMM(mDrill)}mm"
+
+def formatMinimalSpacing(board: Optional[pcbnew.BOARD]) -> str:
+    if board is None:
+        raise RuntimeError("Cannot use minSpace in template without board context")
+    spacing = board.GetDesignSettings().m_MinClearance
+    return f"{pcbnew.ToMM(spacing)}mm"
+
+def formatMinimalWidth(board: Optional[pcbnew.BOARD]) -> str:
+    if board is None:
+        raise RuntimeError("Cannot use minTrace in template without board context")
+    width = board.GetDesignSettings().m_TrackMinWidth
+    return f"{pcbnew.ToMM(width)}mm"
+
 def populateText(template: str, board: Optional[pcbnew.BOARD]=None,
                  boardId: Union[str, int, None]=None) -> str:
     """
@@ -77,7 +95,10 @@ def populateText(template: str, board: Optional[pcbnew.BOARD]=None,
         "boardDate": Formatter(lambda: board.GetTitleBlock().GetDate()),
         "boardRevision": Formatter(lambda: board.GetTitleBlock().GetRevision()),
         "boardCompany": Formatter(lambda: board.GetTitleBlock().GetCompany()),
-        "stackup": Formatter(lambda: formatStackup(board))
+        "stackup": Formatter(lambda: formatStackup(board)),
+        "minDrill": Formatter(lambda: formatMinimalSpacing(board)),
+        "minSpace": Formatter(lambda: formatMinimalSpacing(board)),
+        "minTrace": Formatter(lambda: formatMinimalWidth(board))
     }
 
     for i in range(10):
