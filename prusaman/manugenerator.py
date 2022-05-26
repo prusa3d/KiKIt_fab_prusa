@@ -9,23 +9,24 @@ import subprocess
 import sys
 from itertools import chain
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, Union, TextIO
 
 import pcbnew # type: ignore
 
 from kikit.drc import runBoardDrc, readBoardDrcExclusions, Violation
 
-from prusaman.bom import BomFilter, LegacyFilter, PnBFilter
-from prusaman.drc import DesignRules
-from prusaman.netlist import exportIBomNetlist
-from prusaman.schema import Schema
+from prusaman.footprintlib import PrusaFootprints, matchesFootprintPattern
 
+from .bom import BomFilter, PnBFilter
+from .drc import DesignRules
+from .netlist import exportIBomNetlist
+from .schema import Schema
 from .export import makeDxf, makeGerbers
 from .params import GLUE_STAMPS, MILL_RELEVANT_FOOTPRINTS, RESOURCES
 from .project import PrusamanProject
 from .text import populateText
-from .util import defaultTo, groupBy, splitOn, zipFiles, locatePythonInterpreter
+from .util import defaultTo, groupBy, splitOn, zipFiles, locatePythonInterpreter, replaceDirectory
 
 T = TypeVar("T")
 OutputReporter = Callable[[str, str], None]  # Takes TAG and message
@@ -38,16 +39,6 @@ def stdioPrompt(tag: str, message: str) -> None:
     r = input(f"{tag}: {message} [y/N]:")
     return r.lower() == "y"
 
-def replaceDirectory(target: Union[Path, str], source: Union[Path, str]) -> None:
-    if not os.path.exists(source):
-        return
-    try:
-        os.replace(source, target)
-        return
-    except Exception:
-        pass
-    shutil.rmtree(target, ignore_errors=True)
-    shutil.move(source, target)
 
 from kikit.eeschema_v6 import Symbol, extractComponents, getField, getReference # type: ignore
 
@@ -240,6 +231,7 @@ class Manugenerator:
         self._validateProjectVars()
         self._validateTitleBlock(sch, board)
         self._validateDesignRules()
+        self._validateFootprints()
         self._ensurePassingDrc(board, "source board")
         self._reportInfo("VALIDATE", "Validation of the board finished")
 
@@ -281,6 +273,52 @@ class Manugenerator:
             self._reportError("DRC", f"Wrong board setting {name}. " + \
                 f"{DesignRules.writeValue(left)} expected, got {DesignRules.writeValue(right)}")
         raise RuntimeError("Invalid board design rules, see log for details")
+
+    def _validateFootprints(self) -> None:
+        # TBA Enable once finished
+        return
+
+        self._reportInfo("FOOTPRINTS", "Footprint validation started")
+
+        token = os.environ.get("PRUSAMAN_GH_TOKEN", "")
+        if len(token) == 0:
+            self._askWarning("FOOTPRINTS",
+                "The GitHub access token is not setup, cannot get footprints. Skip footprint check and continue?",
+                "Cannot pull footprint library from GitHub due to unconfigured access token. See installation instructions.")
+        fLib = PrusaFootprints(token)
+        if fLib.getLocalRevision() != fLib.getRemoteRevision():
+            self._reportInfo("FOOTPRINTS", "Pulling new library version from GitHub")
+            fLib.updateFromRemote()
+
+        warnings = False
+        def reportWarning(*args, **kwargs):
+            nonlocal warnings
+            warnings = True
+            self._reportWarning(*args, **kwargs)
+
+        with TemporaryDirectory(suffix=".pretty") as tmpLib:
+            for footprint in self._project.board.Footprints():
+                id = footprint.GetFPID()
+                libName = str(id.GetLibNickname())
+                fName = str(id.GetLibItemName())
+                if libName == "prusa_waiting_for_approval":
+                    reportWarning("FOOTPRINT",
+                        f"{footprint.Reference()} comes from prusa_waiting_for_approval.")
+                if libName in ["prusa_con", "prusa_other"]:
+                    pattern = fLib.getFootprint(libName, fName)
+                    if pattern is None:
+                        reportWarning("FOOTPRINT",
+                            f"{libName}:{fName} ({footprint.Reference().GetText()}) doesn't exist in Github library")
+                        continue
+                    if matchesFootprintPattern(footprint, pattern, Path(tmpLib)):
+                        continue
+                    reportWarning("FOOTPRINT", f"{footprint.Reference().GetText()} doesn't match the library version")
+            if warnings:
+                self._askWarning("FOOTPRINT",
+                    "There are footprint validation errors, ignore and continue?",
+                    "Footprint validation failed")
+
+        self._reportInfo("FOOTPRINTS", "Footprint validation finished")
 
     def _ensurePassingDrc(self, board: pcbnew.BOARD, name) -> None:
         self._reportInfo("DRC", f"Running DRC for {name}")

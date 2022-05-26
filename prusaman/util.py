@@ -11,6 +11,17 @@ K = TypeVar("K")
 
 StrPath = Union[Path, str]
 
+def replaceDirectory(target: Union[Path, str], source: Union[Path, str]) -> None:
+    if not os.path.exists(source):
+        return
+    try:
+        os.replace(source, target)
+        return
+    except Exception:
+        pass
+    shutil.rmtree(target, ignore_errors=True)
+    shutil.move(source, target)
+
 def zipFiles(archivePath: StrPath, basePath: StrPath, files: List[StrPath]) -> None:
     """
     Take archive output name, base path and list of files to put inside a ZIP

@@ -11,7 +11,7 @@ from prusaman.project import PrusamanProject
 from shapely.geometry import LineString, box
 
 
-def addPrusaFp(panel, name, position,):
+def addPrusaFp(panel, name, position):
     footprint = FootprintLoad(str(RESOURCES / "prusalib.pretty"), name)
 
     fid = footprint.GetFPID()

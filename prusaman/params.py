@@ -5,6 +5,8 @@ from pathlib import Path
 PKG_BASE = Path(__file__).resolve().parent
 RESOURCES = Path(PKG_BASE) / "resources"
 
+FOOTPRINT_REPO = "prusa3d/PrusaKicadLib"
+
 @dataclass
 class GluStampType:
     dia: int
