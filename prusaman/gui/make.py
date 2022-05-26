@@ -80,6 +80,7 @@ class PrusamanExport(PrusamanExportBase):
                     generator = Manugenerator(project, tmpdir,
                                     reportInfo=self.onInfo,
                                     reportWarning=self.onWarning,
+                                    reportError=self.onError,
                                     askContinuation=self.onPrompt)
                     generator.make()
                 except Exception as e:

@@ -24,6 +24,12 @@ class StdReporter:
         self.triggered = True
         self._print("Warning", tag, message)
 
+    def error(self, tag: str, message: str) -> None:
+        if not self._repW or len(message) == 0:
+            return
+        self.triggered = True
+        self._print("Error", tag, message)
+
     def info(self, tag: str, message: str) -> None:
         if not self._repI or len(message) == 0:
             return
@@ -95,6 +101,7 @@ def make(source, outputdir, force, werror, silent, question, debug):
         generator = Manugenerator(project, tmpdir,
                         reportInfo=reporter.info,
                         reportWarning=reporter.warning,
+                        reportError=reporter.error,
                         askContinuation=reporter.prompt)
         generator.make()
 

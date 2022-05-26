@@ -14,7 +14,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, Uni
 
 import pcbnew # type: ignore
 
-from kikit.drc import runBoardDrc, readBoardDrcExclusions
+from kikit.drc import runBoardDrc, readBoardDrcExclusions, Violation
 
 from prusaman.bom import BomFilter, LegacyFilter, PnBFilter
 from prusaman.drc import DesignRules
@@ -195,6 +195,7 @@ class Manugenerator:
     def __init__(self, project: PrusamanProject, outputdir: Union[str, Path],
                  reportInfo: Optional[OutputReporter]=None,
                  reportWarning: Optional[OutputReporter]=None,
+                 reportError: Optional[OutputReporter]=None,
                  askContinuation: Optional[ContinuationPrompt]=None) -> None:
         """
         Construct the object that generates the output. This is an object
@@ -213,6 +214,7 @@ class Manugenerator:
         self._outputdir: Path = Path(outputdir)
         self._reportInfo: OutputReporter = defaultTo(reportInfo, stderrReporter)
         self._reportWarning: OutputReporter = defaultTo(reportWarning, stderrReporter)
+        self._reportError: OutputReporter = defaultTo(reportError, stderrReporter)
         self._askContinuation: ContinuationPrompt = defaultTo(askContinuation, stdioPrompt)
 
     def _askWarning(self, tag: str, prompt: str, error: str) -> None:
@@ -276,7 +278,7 @@ class Manugenerator:
         if len(violations) == 0:
             return
         for name, (left, right) in violations.items():
-            self._reportWarning("DRC", f"Wrong board setting {name}. " + \
+            self._reportError("DRC", f"Wrong board setting {name}. " + \
                 f"{DesignRules.writeValue(left)} expected, got {DesignRules.writeValue(right)}")
         raise RuntimeError("Invalid board design rules, see log for details")
 
@@ -285,23 +287,28 @@ class Manugenerator:
         report = runBoardDrc(board, True)
         report.pruneExclusions(readBoardDrcExclusions(board))
 
-        if len(report.drc):
-            self._reportWarning("DRC", f"There are {len(report.drc)} DRC violations:")
-        for v in report.drc:
-            self._reportWarning("DRC", f"{name}: {v.format(pcbnew.EDA_UNITS_MILLIMETRES)}")
+        def reportResult(res: List[Violation], type: str) -> bool:
+            if len(res) == 0:
+                return False
+            report = self._reportError if type == "error" else self._reportWarning
+            report("DRC", f"There are {len(res)} DRC {type}s:")
+            for v in res:
+                report("DRC", f"{name}: {v.format(pcbnew.EDA_UNITS_MILLIMETRES)}")
+            return True
 
-        if len(report.unconnected):
-            self._reportWarning("DRC", f"There are {len(report.unconnected)} unconnected items:")
-        for v in report.unconnected:
-            self._reportWarning("DRC", f"{name}: {v.format(pcbnew.EDA_UNITS_MILLIMETRES)}")
+        getWarnings = lambda l: [x for x in l if x.severity == "warning"]
+        getErrors = lambda l: [x for x in l if x.severity == "error"]
 
-        if len(report.footprint):
-            self._reportWarning("DRC", f"There are {len(report.drc)} footprint violations:")
-        for v in report.footprint:
-            self._reportWarning("DRC", f"{name}: {v.format(pcbnew.EDA_UNITS_MILLIMETRES)}")
+        reportResult(getWarnings(report.drc), "warning")
+        drcErrors = reportResult(getErrors(report.drc), "error")
 
-        errorCount = len(report.drc) + len(report.unconnected) + len(report.footprint)
-        if errorCount > 0:
+        reportResult(getWarnings(report.unconnected), "warning")
+        unconnectedErrors = reportResult(getErrors(report.drc), "error")
+
+        reportResult(getWarnings(report.footprint), "warning")
+        footprintErrors = reportResult(getErrors(report.footprint), "error")
+
+        if drcErrors or unconnectedErrors or footprintErrors:
             self._askWarning("DRC",
                             f"There are DRC errors in {name}. See the log. Ignore them and continue?",
                             f"There are DRC errors in {name}. See the log.")
