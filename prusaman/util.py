@@ -22,15 +22,18 @@ def replaceDirectory(target: Union[Path, str], source: Union[Path, str]) -> None
     shutil.rmtree(target, ignore_errors=True)
     shutil.move(source, target)
 
-def zipFiles(archivePath: StrPath, basePath: StrPath, files: List[StrPath]) -> None:
+def zipFiles(archivePath: StrPath, basePath: StrPath, archiveSubdir: Optional[StrPath],
+             files: List[StrPath]) -> None:
     """
     Take archive output name, base path and list of files to put inside a ZIP
-    archive
+    archive. If the archive exists, the files are added to the existing archive.
     """
     assert os.path.realpath(archivePath) not in [os.path.realpath(f) for f in files]
-    with ZipFile(archivePath, "w", compression=ZIP_DEFLATED, compresslevel=9) as zipF:
+    with ZipFile(archivePath, "a", compression=ZIP_DEFLATED, compresslevel=9) as zipF:
         for fileName in files:
             relativeName = os.path.relpath(str(fileName), str(basePath))
+            if archiveSubdir is not None:
+                relativeName = os.path.join(archiveSubdir, relativeName)
             with open(fileName, "rb") as src, zipF.open(str(relativeName), "w") as dst:
                 shutil.copyfileobj(src, dst)
 

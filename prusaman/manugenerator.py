@@ -218,9 +218,10 @@ class Manugenerator:
         self._makeMillStage()
         self._makeSmtStage()
         self._makeSourcingStage()
+        self._copySrc()
 
         finalArchive = self._outputdir / (self._project.getName() + ".zip")
-        zipFiles(finalArchive, self._outputdir,
+        zipFiles(finalArchive, self._outputdir, None,
             [x for x in glob.glob(str(self._outputdir / "**" / "*")) if os.path.isfile(x)])
 
     def _makeValidation(self) -> None:
@@ -352,6 +353,22 @@ class Manugenerator:
                             f"There are DRC errors in {name}. See the log.")
         self._reportInfo("DRC", f"Running DRC for {name} finished")
 
+    def _copySrc(self) -> None:
+        target = self._outputdir / self._fileName("SOURCE")
+        target.mkdir(parents=True, exist_ok=True)
+
+        source = self._project.getDir()
+        for root, _, files in os.walk(source):
+            for f in files:
+                path = Path(root) / f
+                # Since already generated data can be in the source directory,
+                # ignore them.
+                if "Prusaman_Export" in path.parents:
+                    continue
+                t = target / path.relative_to(source)
+                print(f"Copying {path}")
+                t.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(path, t)
 
     def _makePanelStage(self) -> None:
         panelName = self._fileName("PANEL")
@@ -380,7 +397,7 @@ class Manugenerator:
                         outdir / "datamatrix_znaceni_zbozi_v2.pdf")
         self._makePanelReadme(outdir, boardPath=outfile)
 
-        zipFiles(str(gerberdir) + ".zip", outdir,
+        zipFiles(str(gerberdir) + ".zip", outdir, None,
             glob.glob(str(outdir / "*.pdf")) +
             glob.glob(str(outdir / "*.txt")) +
             glob.glob(str(outdir / "*.html")) +
@@ -403,7 +420,7 @@ class Manugenerator:
         pcbnew.SaveBoard(str(outfile), panel)
         makeGerbers(panel, gerberdir, lambda _: set([pcbnew.Edge_Cuts]))
         self._makeMillReadme(outdir, panel)
-        zipFiles(str(outdir / (millName + ".zip")), outdir,
+        zipFiles(str(outdir / (millName + ".zip")), outdir, None,
             glob.glob(str(outdir / "*.txt")) +
             glob.glob(str(outdir / "*.html")) +
             glob.glob(str(gerberdir / "*")))
@@ -430,7 +447,7 @@ class Manugenerator:
         with open(posName, "w", newline="") as posFile:
             self._makeSmtPosFile(posFile, bom, self._project.getBoard())
 
-        zipFiles(zipName, outdir,
+        zipFiles(zipName, outdir, None,
             glob.glob(str(outdir / "*.txt")) +
             glob.glob(str(outdir / "*.html")) +
             glob.glob(str(outdir / "*.csv")) +
@@ -468,7 +485,7 @@ class Manugenerator:
         with open(sourcingListName, "w", newline="") as f:
             self._makeSourcingBom(f, groups, bomFilter)
 
-        zipFiles(zipName, outdir, [sourcingListName])
+        zipFiles(zipName, outdir, None, [sourcingListName])
         self._reportInfo("SOURCING", "Sourcing stage finished")
 
     def _makeSourcingBom(self, bomFile: TextIO, groups: List[List[Symbol]],
