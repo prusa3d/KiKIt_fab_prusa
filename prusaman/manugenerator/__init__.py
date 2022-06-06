@@ -172,13 +172,16 @@ class Manugenerator(ValidationStageMixin, PanelStageMixin, MillStageMixin,
                 exportIBomNetlist(f, bom)
                 f.close()
 
+                env = os.environ.copy()
+                env["INTERACTIVE_HTML_BOM_NO_DISPLAY"] = "1"
+
                 ibomBinary = RESOURCES / "ibom" / "InteractiveHtmlBom" / "generate_interactive_bom.py"
                 command = [locatePythonInterpreter(), str(ibomBinary), "--no-browser",
                         "--dark-mode", "--extra-fields", "ID,Osazovat/Nakupovat",
                         "--name-format", "%f-ibom",
                         "--netlist-file", f.name,
                         "--dest-dir", str(outdir), str(source)]
-                result = subprocess.run(command, capture_output=True)
+                result = subprocess.run(command, capture_output=True, env=env)
                 stdout = result.stdout.decode("utf-8")
                 stderr = result.stderr.decode("utf-8")
                 if result.returncode != 0:
