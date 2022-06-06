@@ -6,7 +6,8 @@ import textwrap
 
 from prusaman.sync3d import synchronize3D
 from . import __version__
-from .manugenerator import Manugenerator, PrusamanProject, replaceDirectory, stdioPrompt
+from .util import replaceDirectory
+from .manugenerator import Manugenerator, PrusamanProject, stdioPrompt, BoardError
 from pathlib import Path
 import pcbnew
 
@@ -84,7 +85,7 @@ def make(source, outputdir, force, werror, silent, question, debug):
         project = PrusamanProject(source)
 
         if Path(outputdir).exists() and not force:
-            raise RuntimeError(f"Cannot produce output: {outputdir} already exists.\n" +
+            raise BoardError(f"Cannot produce output: {outputdir} already exists.\n" +
                                 "If you wish to rewrite the files, rerun the command with --force")
 
         defaultAnswer = None
@@ -106,16 +107,21 @@ def make(source, outputdir, force, werror, silent, question, debug):
         generator.make()
 
         if werror and reporter.triggered:
-            raise RuntimeError("Warnings were treated as errors. See warnings above.")
+            raise BoardError("Warnings were treated as errors. See warnings above.")
 
         Path(outputdir).mkdir(parents=True, exist_ok=True)
         replaceDirectory(outputdir, tmpdir)
-    except Exception as e:
+    except BoardError as e:
         sys.stderr.write(f"Error occurred: \n{textwrap.indent(str(e), '   ')}\n")
         sys.stderr.write(f"\nNo output files produced. Build artifacts are stored in {faileddir}\n")
         replaceDirectory(faileddir, tmpdir)
         if debug:
             raise e
+    except Exception as e:
+        sys.stderr.write(f"Unexpected error occurred: \n{textwrap.indent(str(e), '   ')}\n")
+        sys.stderr.write(f"Build artifacts are stored in {faileddir}\n")
+        sys.stderr.write(f"This is probably a bug, please open issue and attach the stacktrace below:")
+        raise e
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
 

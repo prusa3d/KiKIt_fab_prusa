@@ -13,8 +13,8 @@ from .common import reportException
 from ..params import RESOURCES
 from ..dialogs.prusamanExport import PrusamanExportBase
 from ..project import PrusamanProject
-from ..manugenerator import Manugenerator, replaceDirectory
-from ..util import locatePythonInterpreter
+from ..manugenerator import Manugenerator, BoardError
+from ..util import locatePythonInterpreter, replaceDirectory
 from ..wxAnyThread import anythread
 
 class PrusamanExport(PrusamanExportBase):
@@ -43,7 +43,7 @@ class PrusamanExport(PrusamanExportBase):
             self.triggered = False
 
             if len(self.outDirSelector.GetPath()) == 0:
-                raise RuntimeError("No output directory specified")
+                raise BoardError("No output directory specified")
             outDir = Path(self.outDirSelector.GetPath()) / "Prusaman_Export"
             if outDir.exists():
                 answer = wx.MessageBox(
@@ -97,7 +97,7 @@ class PrusamanExport(PrusamanExportBase):
                 raise exception
 
             if self.werrorCheckbox.GetValue() and self.triggered:
-                raise RuntimeError("Warnings were treated as errors.\nSee warnings in the output box.")
+                raise BoardError("Warnings were treated as errors.\nSee warnings in the output box.")
 
             Path(outDir).mkdir(parents=True, exist_ok=True)
             replaceDirectory(outDir, tmpdir)
@@ -181,7 +181,7 @@ class ExportPlugin(pcbnew.ActionPlugin):
     def backgroundRun(self):
         try:
             if pcbnew.GetBoard().IsEmpty():
-                raise RuntimeError("Cannot export when there is no board opened")
+                raise BoardError("Cannot export when there is no board opened")
             boardPath = Path(pcbnew.GetBoard().GetFileName())
             projectPath = boardPath.resolve().parent
 
