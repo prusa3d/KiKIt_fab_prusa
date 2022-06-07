@@ -122,14 +122,18 @@ class Manugenerator(ValidationStageMixin, PanelStageMixin, MillStageMixin,
                 [x for x in glob.glob(str(self._outputdir / "**" / "*")) if os.path.isfile(x)])
 
     def _makeMetadata(self):
+        self._reportInfo("LOG", "Final log start")
         logfile = self._outputdir / "prusaman-info.txt"
         logfile.parent.mkdir(exist_ok=True, parents=True)
+        self._reportInfo("LOG", "Final log directory created")
         with open(logfile, "w") as f:
+            self._reportInfo("LOG", "Final opened")
             now = datetime.now()
             f.write(f"Prusaman version {prusaman.__version__}\n")
             f.write(f"Generated on {now.strftime('%d. %m. %Y, %H:%M:%S')}\n")
             f.write(f"\nThe build log follows:\n")
             self._writeLog(f)
+        self._reportInfo("LOG", "Final log finished")
 
     def _writeLog(self, file):
         severityPad = max(map(lambda x: len(str(x[0])), self._log))
