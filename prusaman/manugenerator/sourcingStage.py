@@ -73,7 +73,7 @@ class SourcingStageMixin:
             text, num = splitOn(ref, lambda x: not x.isdigit())
             if not num.isdigit():
                 self._reportError("ANNOTATION", f"Component {ref} has invalid annotation.")
-        for ref in unann:
-            self._reportError("ANNOTATION", "There {c}× unanotated components with {ref}")
+        for ref, c in unann.items():
+            self._reportError("ANNOTATION", f"There {c}× unanotated components with {ref}")
         if len(unann) > 0 or len(wrongAnn):
             raise BoardError("The schematics contains annotation error.")

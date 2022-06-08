@@ -75,6 +75,7 @@ class SmtStageMixin:
 
         bom = extractComponents(str(self._project.getSchema()))
         bom = [x for x in bom if bomFilter.assemblyFilter(x)]
+        self._checkAnnotation(bom)
         bom.sort(key=naturalComponetKey)
 
         with open(posName, "w", newline="") as posFile:
