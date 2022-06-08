@@ -159,7 +159,7 @@ class Manugenerator(ValidationStageMixin, PanelStageMixin, MillStageMixin,
                 path = Path(root) / f
                 # Since already generated data can be in the source directory,
                 # ignore them.
-                if "Prusaman_Export" in path.parents:
+                if any(x.name.startswith("Prusaman_Export") for x in path.parents):
                     continue
                 t = target / path.relative_to(source)
                 t.parent.mkdir(parents=True, exist_ok=True)
