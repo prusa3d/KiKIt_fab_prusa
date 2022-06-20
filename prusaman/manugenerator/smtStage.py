@@ -111,6 +111,13 @@ class SmtStageMixin:
             with open(outdir / f, "w") as dxfFile:
                 dxfFile.write(content)
 
+    def _ensureNoComma(self, value: str, name: str) -> str:
+        if "," in value:
+            value = value.replace(",", ".")
+            self._reportWarning("SMT POS", f"The {name} contains " +
+                        "forbidden character ','. Replacing by '.'")
+        return value
+
     def _makeSmtPosFile(self, posFile: TextIO, bom: List[Symbol],
                         boardPath: Path) -> None:
         sourceBoard = pcbnew.LoadBoard(str(boardPath))
@@ -126,13 +133,16 @@ class SmtStageMixin:
             if f is None:
                 self._reportWarning("SMT POS", f"Reference {ref} is present in schematics, " + \
                                     "but not in board. Ignoring.")
+            value = self._ensureNoComma(f.GetValue(),
+                f"value of component {ref}")
+            fpid = self._ensureNoComma(f.GetFPID().GetUniStringLibItemName(),
+                f"footprint ID of component {ref}")
             pos = f.GetPosition()
-            fpid = f.GetFPID()
             writer.writerow([
                 f.GetReference(),
                 id,
-                f.GetValue(),
-                fpid.GetUniStringLibItemName(),
+                value,
+                fpid,
                 pcbnew.ToMM(pos[0]),
                 -pcbnew.ToMM(pos[1]),
                 ((f.GetOrientation()) % 3600) / 10,
