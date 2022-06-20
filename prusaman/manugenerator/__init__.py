@@ -154,6 +154,10 @@ class Manugenerator(ValidationStageMixin, PanelStageMixin, MillStageMixin,
         target.mkdir(parents=True, exist_ok=True)
 
         source = self._project.getDir()
+
+        # We build the list first and then copy. Otherwise, we can create an
+        # infinite loop as we copy new and new files.
+        fileList: Tuple[Path, Path] = [] # Source -> Target
         for root, _, files in os.walk(source):
             for f in files:
                 path = Path(root) / f
@@ -162,8 +166,10 @@ class Manugenerator(ValidationStageMixin, PanelStageMixin, MillStageMixin,
                 if any(x.name.startswith("Prusaman_Export") for x in path.parents):
                     continue
                 t = target / path.relative_to(source)
-                t.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(path, t)
+            fileList.append((path, t))
+        for s, t in fileList:
+            t.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(s, t)
 
     def _fileName(self, prefix: str) -> str:
         return f"{prefix}-{self._project.getName()}"
