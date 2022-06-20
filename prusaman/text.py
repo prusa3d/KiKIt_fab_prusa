@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Optional, Callable, Union
 import pcbnew # type: ignore
 from .pcbnew_common import findBoardBoundingBox
@@ -46,6 +47,7 @@ def formatStackup(board: Optional[pcbnew.BOARD]) -> str:
     if stackup is None:
         raise RuntimeError("The board doesn't contain stackup information")
     layersText = []
+    thickness = Decimal(0)
     for layerInfo in stackup.items[1:]:
         if not isElement("layer")(layerInfo):
             continue
@@ -62,7 +64,9 @@ def formatStackup(board: Optional[pcbnew.BOARD]) -> str:
         if not kicadLayerName.startswith("dielectric"):
             text += f" represented by layer {kicadLayerName}"
         layersText.append(text)
-    return "\n".join([f"- {x}" for x in layersText])
+
+        thickness += Decimal(properties.get("thickness", 0))
+    return "\n".join([f"- {x}" for x in layersText]) + f"\n\nBoard thickness {thickness:.2g} mm"
 
 def formatMinimalDrilling(board: Optional[pcbnew.BOARD]) -> str:
     if board is None:
