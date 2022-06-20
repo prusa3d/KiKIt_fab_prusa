@@ -19,16 +19,17 @@ def makeGerbers(source: Union[Path, BOARD], outdir: Path,
     popt = pctl.GetPlotOptions()
     popt.SetOutputDirectory(str(outdir))
     popt.SetPlotFrameRef(False)
-    popt.SetSketchPadLineWidth(FromMM(0.1))
     popt.SetUseGerberAttributes(False)
-    popt.SetIncludeGerberNetlistInfo(True)
+    # popt.SetIncludeGerberNetlistInfo(True)
     popt.SetCreateGerberJobFile(True)
     popt.SetUseGerberProtelExtensions(True)
     popt.SetExcludeEdgeLayer(True)
     popt.SetScale(1)
     popt.SetUseAuxOrigin(True)
     popt.SetUseGerberX2format(False)
-    popt.SetSubtractMaskFromSilk(True)
+    # The computer on the link doesn't support negative layers, so we cannot
+    # subtract mask from silkscreen
+    popt.SetSubtractMaskFromSilk(False)
     popt.SetSkipPlotNPTH_Pads(False)
     popt.SetDisableGerberMacros(True)
     popt.SetDrillMarksType(0) # NO_DRILL_SHAPE
