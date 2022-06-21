@@ -7,6 +7,9 @@ RESOURCES = Path(PKG_BASE) / "resources"
 
 FOOTPRINT_REPO = "prusa3d/PrusaKicadLib"
 
+# This is only a temporary override for initial testing
+FOOTPRINT_REPO = "yaqwsx/PrusaKicadLib"
+
 @dataclass
 class GluStampType:
     dia: int

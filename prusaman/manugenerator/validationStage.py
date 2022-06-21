@@ -1,8 +1,13 @@
+import datetime
+import os
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import List
+import keyring
 from .common import BoardError
 from ..drc import DesignRules
 from ..schema import Schema
-from ..footprintlib import PrusaFootprints, matchesFootprintPattern
+from ..footprintlib import PrusaFootprints, extractRevision, matchesFootprintPattern
 
 import pcbnew # type: ignore
 
@@ -62,16 +67,12 @@ class ValidationStageMixin:
         raise BoardError("Invalid board design rules.")
 
     def _validateFootprints(self) -> None:
-        # TBA Enable once finished
-        return
-
         self._reportInfo("FOOTPRINTS", "Footprint validation started")
 
-        token = os.environ.get("PRUSAMAN_GH_TOKEN", "")
-        if len(token) == 0:
-            self._askWarning("FOOTPRINTS",
-                "The GitHub access token is not setup, cannot get footprints. Skip footprint check and continue?",
-                "Cannot pull footprint library from GitHub due to unconfigured access token. See installation instructions.")
+        token = self._obtainGhToken()
+        if token is None:
+            return
+
         fLib = PrusaFootprints(token)
         if fLib.getLocalRevision() != fLib.getRemoteRevision():
             self._reportInfo("FOOTPRINTS", "Pulling new library version from GitHub")
@@ -85,27 +86,64 @@ class ValidationStageMixin:
 
         with TemporaryDirectory(suffix=".pretty") as tmpLib:
             for footprint in self._project.board.Footprints():
+                reference = footprint.Reference().GetText()
                 id = footprint.GetFPID()
                 libName = str(id.GetLibNickname())
                 fName = str(id.GetLibItemName())
                 if libName == "prusa_waiting_for_approval":
                     reportWarning("FOOTPRINT",
                         f"{footprint.Reference()} comes from prusa_waiting_for_approval.")
-                if libName in ["prusa_con", "prusa_other"]:
-                    pattern = fLib.getFootprint(libName, fName)
-                    if pattern is None:
-                        reportWarning("FOOTPRINT",
-                            f"{libName}:{fName} ({footprint.Reference().GetText()}) doesn't exist in Github library")
-                        continue
-                    if matchesFootprintPattern(footprint, pattern, Path(tmpLib)):
-                        continue
-                    reportWarning("FOOTPRINT", f"{footprint.Reference().GetText()} doesn't match the library version")
+                if libName not in ["prusa_con", "prusa_other"]:
+                    continue
+                pattern = fLib.getFootprint(libName, fName)
+                if pattern is None:
+                    reportWarning("FOOTPRINT",
+                        f"{libName}:{fName} ({reference}) doesn't exist in Github library")
+                    continue
+                patternRev = extractRevision(pattern)
+                footprintRev = extractRevision(footprint)
+                if patternRev is None:
+                    reportWarning("FOOTPRINT", f"{libName}:{fName} is missing revision on GitHub. " +
+                        "There is something wrong in the library. Please, report it." )
+                if patternRev == footprintRev:
+                    # The revision is the most up-to-date, no more checks to perform
+                    continue
+                revsplit = patternRev.split("-", 1)
+                gitrev = revsplit[0]
+                date = datetime.datetime.fromisoformat(revsplit[1])
+                datestr = date.strftime("%d. %m. %Y, %H:%M")
+                reportWarning("FOOTPRINT", f"Footprint of {reference} is out of date, " +
+                                           f"there is a newer version of {libName}:{fName}: {gitrev} ({datestr})")
             if warnings:
                 self._askWarning("FOOTPRINT",
                     "There are footprint validation errors, ignore and continue?",
                     "Footprint validation failed")
 
         self._reportInfo("FOOTPRINTS", "Footprint validation finished")
+
+    def _getTokenFromKeyring(self):
+        try:
+            return keyring.get_password("prusaman", "github")
+        except Exception as e:
+            return None
+
+    def _obtainGhToken(self):
+        tokenObtainMethods = [
+            lambda: os.environ.get("PRUSAMAN_GH_TOKEN", ""),
+            self._getTokenFromKeyring
+        ]
+
+        token = None
+        for method in tokenObtainMethods:
+            token = method()
+            if token is not None and len(token.strip()) > 0:
+                break
+            token = None
+        if token is None:
+            self._askWarning("FOOTPRINTS",
+                "The GitHub access token is not setup, cannot fetch footprints. Skip footprint check and continue?",
+                "Cannot pull footprint library from GitHub due to unconfigured access token. See installation instructions.")
+        return token
 
     def _ensurePassingDrc(self, board: pcbnew.BOARD, name) -> None:
         self._reportInfo("DRC", f"Running DRC for {name}")

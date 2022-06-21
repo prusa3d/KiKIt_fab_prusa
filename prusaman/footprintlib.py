@@ -93,6 +93,15 @@ class PrusaFootprints:
             return None
         return pcbnew.FootprintLoad(str(libPath), str(fname))
 
+def extractRevision(footprint: pcbnew.FOOTPRINT) -> Optional[str]:
+    for x in footprint.GraphicalItems():
+        if not isinstance(x, pcbnew.FP_TEXT):
+            continue
+        text = x.GetText()
+        if text.startswith("PRUSA_REVISION:"):
+            return text.replace("PRUSA_REVISION: ", "")
+    return None
+
 def matchesFootprintPattern(footprint: pcbnew.FOOTPRINT,
                             pattern: pcbnew.FOOTPRINT,
                             workingDir: Path) -> bool:
@@ -155,4 +164,4 @@ def simplifyAndCanonizeFpAst(node: SExpr) -> SExpr:
         return True
     node.items = [simplifyAndCanonizeFpAst(x) for x in node.items if allowed(x)]
     node.items.sort(key=lambda x: str(x))
-    return node
+    return

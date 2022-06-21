@@ -42,6 +42,7 @@ setuptools.setup(
         "click>=7.1",
         "ruamel.yaml==0.17.*",
         "python-tsp==0.2.*",
+        "keyring==23.6.0"
     ],
     setup_requires=[
         "versioneer"
