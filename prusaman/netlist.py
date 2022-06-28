@@ -35,11 +35,11 @@ def exportSymbol(file: TextIO, symbol: Symbol) -> None:
     if pnbFieldVal is not None:
         pnbFieldVal = pnbFieldVal.strip()
         if pnbFieldVal.lower() == "dnf":
-            pnbFieldVal = "neosazovat a nenakupovat"
+            pnbFieldVal = "nenakupovat"
         elif pnbFieldVal == "#":
             pnbFieldVal = "neosazovat"
         else:
-            pnbFieldVal = "osazovat a nakupovat"
+            pnbFieldVal = "osadit"
         properties["Osazovat/Nakupovat"] = pnbFieldVal
 
     file.write("(comp ")
