@@ -9,7 +9,7 @@ class BomFilter:
     an item should or shouldn't be included in the BOM for sourcing and SMT
     assembly.
     """
-    SPECIAL_REFERENCES = ["#", "M", "NT", "G"]
+    SPECIAL_REFERENCES = ["#"]
 
     def assemblyFilter(self, symbol: Symbol) -> bool:
         raise NotImplementedError("BomFilter is a base class")
