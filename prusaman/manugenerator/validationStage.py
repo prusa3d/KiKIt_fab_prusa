@@ -2,7 +2,7 @@ import datetime
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List
+from typing import Dict, List, Tuple
 import keyring
 from .common import BoardError
 from ..drc import DesignRules
@@ -84,6 +84,8 @@ class ValidationStageMixin:
             warnings = True
             self._reportWarning(*args, **kwargs)
 
+        revisionCache: Dict[Tuple[str, str], str] = {}
+
         with TemporaryDirectory(suffix=".pretty") as tmpLib:
             for footprint in self._project.board.Footprints():
                 reference = footprint.Reference().GetText()
@@ -95,12 +97,16 @@ class ValidationStageMixin:
                         f"{footprint.Reference()} comes from prusa_waiting_for_approval.")
                 if libName not in ["prusa_con", "prusa_other"]:
                     continue
-                pattern = fLib.getFootprint(libName, fName)
-                if pattern is None:
-                    reportWarning("FOOTPRINT",
-                        f"{libName}:{fName} ({reference}) doesn't exist in Github library")
-                    continue
-                patternRev = extractRevision(pattern)
+                if (libName, fName) in revisionCache:
+                    patternRev = revisionCache[(libName, fName)]
+                else:
+                    pattern = fLib.getFootprint(libName, fName)
+                    if pattern is None:
+                        reportWarning("FOOTPRINT",
+                            f"{libName}:{fName} ({reference}) doesn't exist in Github library")
+                        continue
+                    patternRev = extractRevision(pattern)
+                    revisionCache[(libName, fName)] = patternRev
                 footprintRev = extractRevision(footprint)
                 if patternRev is None:
                     reportWarning("FOOTPRINT", f"{libName}:{fName} is missing revision on GitHub. " +

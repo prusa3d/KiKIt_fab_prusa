@@ -1,6 +1,6 @@
 import re
 import shutil
-from typing import List, Union, Optional
+from typing import Dict, List, Union, Optional
 from pathlib import Path
 from urllib.request import urlopen, Request
 from zipfile import ZipFile
