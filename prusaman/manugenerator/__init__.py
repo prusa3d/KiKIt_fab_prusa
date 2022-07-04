@@ -166,7 +166,7 @@ class Manugenerator(ValidationStageMixin, PanelStageMixin, MillStageMixin,
                 if any(x.name.startswith("Prusaman_Export") for x in path.parents):
                     continue
                 t = target / path.relative_to(source)
-            fileList.append((path, t))
+                fileList.append((path, t))
         for s, t in fileList:
             t.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(s, t)
