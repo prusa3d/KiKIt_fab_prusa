@@ -1,0 +1,15 @@
+{
+    "allowBlindVias": false,
+    "allowMicroVias": false,
+    "minimalClearance": "0.1mm",
+    "minimalTrackWidth": "0.1mm",
+    "minimalAnnularWidth": "0.13mm",
+    "minimalViaDiameter": "0.4mm",
+    "copperToHoleClearance": "0.2mm",
+    "copperToEdgeClearance": "0.5mm",
+    "minimalThroughHole": "0.2mm",
+    "holeToHoleClearance": "0.25mm",
+    "minimalMicroViaDiameter": "0.2mm",
+    "minimalMicroViaHole": "0.1mm",
+    "minimalSilkscreenClearance": "0mm"
+}
